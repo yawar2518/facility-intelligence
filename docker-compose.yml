@@ -1,0 +1,109 @@
+# ============================================================
+# Facility Intelligence — Docker Compose (Development)
+# ============================================================
+# Services: PostgreSQL/TimescaleDB, Redis, Mosquitto, pgAdmin
+#
+# Usage:
+#   docker compose up -d          → start all services
+#   docker compose down           → stop all services
+#   docker compose down -v        → stop + delete all data
+#   docker compose logs -f <svc>  → tail logs for a service
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # DATABASE: PostgreSQL 16 + TimescaleDB
+  # TimescaleDB extends Postgres with time-series superpowers:
+  # hypertables, continuous aggregates, automatic partitioning
+  # ----------------------------------------------------------
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: fi_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: facility_intelligence
+      POSTGRES_USER: fi_user
+      POSTGRES_PASSWORD: fi_password
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "5432:5432"         # Expose to host so Django can connect
+    volumes:
+      - postgres_data:/var/lib/postgresql/data    # Persist DB data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fi_user -d facility_intelligence"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # CACHE + MESSAGE BROKER: Redis
+  # Used by: Celery (job queue), Django Channels (WebSockets)
+  # Two logical databases: redis/0 = Celery, redis/1 = Channels
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: fi_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes   # Enable persistence
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # MQTT BROKER: Mosquitto
+  # Receives device heartbeats and vehicle events from
+  # real devices (or our simulator during development)
+  # ----------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: fi_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"         # MQTT
+      - "9001:9001"         # MQTT over WebSockets (for browser clients)
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  # ----------------------------------------------------------
+  # DATABASE GUI: pgAdmin 4
+  # Visual interface to inspect PostgreSQL/TimescaleDB
+  # Access at: http://localhost:5050
+  # Login: admin@fi.local / admin
+  # ----------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fi_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@facilityintelligence.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"    # Single-user mode for dev
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+# ----------------------------------------------------------
+# NAMED VOLUMES
+# Docker manages these — data persists between container
+# restarts. 'docker compose down -v' deletes them.
+# ----------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_log:
+  pgadmin_data:
