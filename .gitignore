@@ -216,3 +216,40 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================================
+# Project-specific additions
+# ============================================================
+
+# Environment files (NEVER commit real secrets)
+.env
+.env.local
+.env.*.local
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+
+# Mosquitto generated files
+infra/mosquitto/data/
+infra/mosquitto/log/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
