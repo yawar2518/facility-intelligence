@@ -147,14 +147,14 @@ async def receive_heartbeat(
         await db.execute(
             text("""
                 INSERT INTO ingestion_heartbeats
-                    (id, device_id, facility_code, timestamp,
+                    (record_id, device_id, facility_code, timestamp,
                      firmware_version, error_codes, metrics)
                 VALUES
-                    (:id, :device_id, :facility_code, :timestamp,
+                    (:record_id, :device_id, :facility_code, :timestamp,
                      :firmware_version, CAST(:error_codes AS jsonb), CAST(:metrics AS jsonb))
             """),
             {
-                "id": heartbeat_id,
+                "record_id": heartbeat_id,
                 "device_id": str(device.id),
                 "facility_code": payload.facility_code,
                 "timestamp": payload.timestamp,
@@ -237,16 +237,16 @@ async def receive_vehicle_event(
         await db.execute(
             text("""
                 INSERT INTO ingestion_vehicle_events
-                    (id, device_id, lane_id, area_id, facility_id,
+                    (record_id, device_id, lane_id, area_id, facility_id,
                      event_type, timestamp, plate_number,
                      transaction_id, duration_ms, metadata)
                 VALUES
-                    (:id, :device_id, :lane_id, :area_id, :facility_id,
+                    (:record_id, :device_id, :lane_id, :area_id, :facility_id,
                      :event_type, :timestamp, :plate_number,
                      :transaction_id, :duration_ms, CAST(:metadata AS jsonb))
             """),
             {
-                "id": event_id,
+                "record_id": event_id,
                 "device_id": str(device.id),
                 "lane_id": str(device.lane_id),
                 "area_id": str(device.area_id),

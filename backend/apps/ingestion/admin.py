@@ -7,7 +7,7 @@ class HeartbeatAdmin(admin.ModelAdmin):
     list_display = ['device', 'facility_code', 'timestamp', 'firmware_version', 'error_codes']
     list_filter = ['facility_code']
     ordering = ['-timestamp']
-    readonly_fields = ['id', 'timestamp']
+    readonly_fields = ['record_id', 'timestamp']
 
 
 @admin.register(VehicleEvent)
@@ -15,4 +15,4 @@ class VehicleEventAdmin(admin.ModelAdmin):
     list_display = ['event_type', 'device', 'lane', 'facility', 'timestamp', 'plate_number']
     list_filter = ['event_type', 'facility']
     ordering = ['-timestamp']
-    readonly_fields = ['id', 'timestamp']
+    readonly_fields = ['record_id', 'timestamp']

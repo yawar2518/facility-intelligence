@@ -1,8 +1,10 @@
 """
 Ingestion models — raw time-series data from devices.
 
-These tables will be converted to TimescaleDB hypertables
-in the next migration step, partitioned by timestamp.
+No single-column primary key — TimescaleDB requires the
+partition column (timestamp) to be part of any unique constraint.
+We use (record_id, timestamp) as a composite unique constraint.
+Django's auto-created 'id' is disabled via Meta.
 """
 
 import uuid
@@ -13,10 +15,13 @@ from apps.hierarchy.models import Facility, Area, Lane, Device
 class Heartbeat(models.Model):
     """
     Raw heartbeat received from a device.
-    One record per heartbeat — high volume table.
-    Will be converted to TimescaleDB hypertable.
+    High-volume table — converted to TimescaleDB hypertable.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    record_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
     device = models.ForeignKey(
         Device, on_delete=models.CASCADE, related_name='heartbeats'
     )
@@ -41,8 +46,7 @@ class Heartbeat(models.Model):
 class VehicleEvent(models.Model):
     """
     Raw vehicle event — entry, exit, payment, fault, etc.
-    Core traffic data for analytics and anomaly detection.
-    Will be converted to TimescaleDB hypertable.
+    Core traffic data — converted to TimescaleDB hypertable.
     """
 
     class EventType(models.TextChoices):
@@ -55,7 +59,11 @@ class VehicleEvent(models.Model):
         FAULT = 'FAULT', 'Device Fault'
         RECOVERY = 'RECOVERY', 'Device Recovery'
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    record_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
     device = models.ForeignKey(
         Device, on_delete=models.CASCADE, related_name='vehicle_events'
     )
