@@ -16,6 +16,7 @@ urlpatterns = [
 
     # Hierarchy API
     path('api/v1/', include('apps.hierarchy.urls')),
+    path('api/v1/monitoring/', include('apps.monitoring.urls')),
 ]
 
 if settings.DEBUG:

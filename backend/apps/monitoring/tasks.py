@@ -6,6 +6,8 @@ from django.utils import timezone
 
 from apps.hierarchy.models import Device
 from apps.monitoring.models import DeviceStatusChange, HealthCheckRun
+from apps.ingestion.models import Heartbeat
+from apps.monitoring.health_rules import evaluate_device_health
 
 logger = logging.getLogger(__name__)
 
@@ -124,11 +126,62 @@ def _process_single_device(device, now):
             )
         return
 
-    # Case 3: heartbeat is fresh — check if device needs recovery
-    if device.status == Device.DeviceStatus.OFFLINE:
+    # Case 3: heartbeat is fresh — run health rules evaluator
+    # Fetch the latest heartbeat record to get metrics and error_codes
+    latest_heartbeat = (
+        Heartbeat.objects
+        .filter(device=device)
+        .order_by('-timestamp')
+        .first()
+    )
+
+    # Build the payload the evaluator expects
+    heartbeat_data = {}
+    if latest_heartbeat:
+        heartbeat_data = {
+            'metrics': latest_heartbeat.metrics,
+            'error_codes': latest_heartbeat.error_codes,
+        }
+
+    # Ask the health rules engine what the status should be
+    verdict = evaluate_device_health(device, heartbeat_data)
+
+    # If device was OFFLINE or UNKNOWN, this is a recovery
+    # Use the evaluator verdict as the recovery status — a device
+    # can come back DEGRADED if it's already reporting errors
+    if device.status in (
+        Device.DeviceStatus.OFFLINE,
+        Device.DeviceStatus.UNKNOWN,
+    ):
+        recovery_status = (
+            Device.DeviceStatus.DEGRADED
+            if verdict == 'DEGRADED'
+            else Device.DeviceStatus.ONLINE
+        )
         _record_status_change(
             device,
-            new_status=Device.DeviceStatus.ONLINE,
+            new_status=recovery_status,
             reason=DeviceStatusChange.ChangeReason.HEARTBEAT_RECEIVED,
             metadata={'note': 'Heartbeat resumed after offline period'},
+        )
+        return
+
+    # Device is already ONLINE or DEGRADED — check if verdict differs
+    target_status = (
+        Device.DeviceStatus.DEGRADED
+        if verdict == 'DEGRADED'
+        else Device.DeviceStatus.ONLINE
+    )
+
+    if device.status != target_status:
+        reason = (
+            DeviceStatusChange.ChangeReason.ERROR_CODES_DETECTED
+            if target_status == Device.DeviceStatus.DEGRADED
+            else DeviceStatusChange.ChangeReason.ERROR_CODES_CLEARED
+        )
+        _record_status_change(
+            device,
+            new_status=target_status,
+            reason=reason,
+            metadata=heartbeat_data,
         )
