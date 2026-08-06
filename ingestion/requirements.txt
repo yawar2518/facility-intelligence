@@ -1,0 +1,26 @@
+# ============================================================
+# INGESTION SERVICE — FastAPI + MQTT
+# ============================================================
+
+# FastAPI
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+
+# Validation
+pydantic==2.10.3
+pydantic-settings==2.7.0
+
+# Database (same PostgreSQL)
+psycopg[binary]==3.2.3
+SQLAlchemy==2.0.36
+asyncpg==0.30.0
+
+# MQTT
+paho-mqtt==2.1.0
+
+# HTTP client
+httpx==0.28.1
+
+# Utilities
+python-decouple==3.8
+python-dotenv==1.0.1
