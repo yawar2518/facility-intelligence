@@ -1,4 +1,4 @@
-function DeviceTile({ device }) {
+function DeviceTile({ device, onClick }) {
 
   // Status color mapping — background and text
   const statusStyles = {
@@ -32,7 +32,7 @@ function DeviceTile({ device }) {
   const dot = dotStyles[device.status] || dotStyles.UNKNOWN
 
   return (
-    <div className={`border rounded-lg p-3 ${style} cursor-pointer hover:opacity-80 transition-opacity`}>
+    <div className={`border rounded-lg p-3 ${style} cursor-pointer hover:opacity-80 transition-opacity`} onClick={onClick}>
 
       {/* Top row — code and status dot */}
       <div className="flex items-center justify-between mb-1">
@@ -47,8 +47,8 @@ function DeviceTile({ device }) {
 
       {/* Status label */}
       <p className="text-xs font-medium">{device.status}</p>
-
     </div>
+    
   )
 }
 

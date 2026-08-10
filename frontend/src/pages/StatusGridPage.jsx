@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFacilities } from '../hooks/useFacilities'
 import { useFacilityDeviceTree } from '../hooks/useFacilityDeviceTree'
 import FacilitySelector from '../components/StatusGrid/FacilitySelector'
+import DeviceDetailPanel from '../components/StatusGrid/DeviceDetailPanel'
 import AreaPanel from '../components/StatusGrid/AreaPanel'
 
 function StatusGridPage() {
@@ -13,6 +14,8 @@ function StatusGridPage() {
 
   // Get device tree for the selected facility
   const { tree, loading: treeLoading, error } = useFacilityDeviceTree(selectedFacilityId)
+
+  const [selectedDevice, setSelectedDevice] = useState(null)
 
   return (
     <div className="p-8">
@@ -74,8 +77,15 @@ function StatusGridPage() {
             <AreaPanel
               key={area.id}
               area={area}
+              onDeviceClick={setSelectedDevice}
             />
           ))}
+          {selectedDevice && (
+            <DeviceDetailPanel
+              device={selectedDevice}
+              onClose={() => setSelectedDevice(null)}
+            />
+          )}
         </div>
       )}
 

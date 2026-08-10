@@ -1,6 +1,6 @@
 import DeviceTile from './DeviceTile'
 
-function LaneRow({ lane }) {
+function LaneRow({ lane, onDeviceClick }) {
 
   // Lane type badge colors
   const laneTypeBadge = {
@@ -32,6 +32,7 @@ function LaneRow({ lane }) {
           <DeviceTile
             key={device.id}
             device={device}
+            onClick={() => onDeviceClick(device)}
           />
         ))}
       </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import LaneRow from './LaneRow'
 
-function AreaPanel({ area }) {
+function AreaPanel({ area, onDeviceClick }) {
   // Track whether this area is expanded or collapsed
   const [isOpen, setIsOpen] = useState(true)
 
@@ -52,6 +52,7 @@ function AreaPanel({ area }) {
               <LaneRow
                 key={lane.id}
                 lane={lane}
+                onDeviceClick={onDeviceClick}
               />
             ))}
           </div>
