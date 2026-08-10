@@ -23,7 +23,7 @@ const wsRef = useRef(null)
 
 useEffect(() => {
   // Only connect when a facility is selected and tree is loaded
-  if (!selectedFacilityId || !tree) return
+  if (!selectedFacilityId) return
 
   // Open WebSocket connection
   const ws = new WebSocket(
