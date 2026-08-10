@@ -31,5 +31,5 @@ export function useFacilityDeviceTree(facilityId) {
   // re-run this effect whenever facilityId changes
   // that's how selecting a different facility triggers a new fetch
 
-  return { tree, loading, error }
+  return { tree, setTree, loading, error }
 }

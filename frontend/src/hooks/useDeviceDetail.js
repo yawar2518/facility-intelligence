@@ -8,7 +8,6 @@ export function useDeviceDetail(deviceId) {
 
   useEffect(() => {
     if (!deviceId) {
-      // Panel closed — reset state
       setUptime(null)
       return
     }
@@ -16,7 +15,6 @@ export function useDeviceDetail(deviceId) {
     async function fetchUptime() {
       setLoading(true)
       setError(null)
-
       try {
         const response = await getDeviceUptime(deviceId, 7)
         setUptime(response.data)
@@ -28,7 +26,15 @@ export function useDeviceDetail(deviceId) {
       }
     }
 
+    // Fetch immediately on open
     fetchUptime()
+
+    // Then refresh every 60 seconds while panel is open
+    const interval = setInterval(fetchUptime, 60000)
+
+    // Cleanup — stop refreshing when panel closes
+    return () => clearInterval(interval)
+
   }, [deviceId])
 
   return { uptime, loading, error }

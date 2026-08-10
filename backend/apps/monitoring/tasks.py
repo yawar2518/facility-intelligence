@@ -3,7 +3,8 @@ from datetime import timedelta
 
 from celery import shared_task
 from django.utils import timezone
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from apps.hierarchy.models import Device
 from apps.monitoring.models import DeviceStatusChange, HealthCheckRun
 from apps.ingestion.models import Heartbeat
@@ -56,6 +57,26 @@ def _record_status_change(device, new_status, reason, metadata=None):
         status=new_status,
         updated_at=now,
     )
+
+    # Broadcast status change to all connected WebSocket clients
+    # for this facility
+    try:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"facility_{str(device.lane.area.facility.id)}",
+            {
+                'type': 'device_status_update',  # maps to consumer method name
+                'device_id': str(device.id),
+                'device_code': device.code,
+                'new_status': new_status,
+                'previous_status': previous_status,
+                'reason': reason,
+                'changed_at': now.isoformat(),
+            }
+        )
+    except Exception as e:
+        # Never let WebSocket broadcast failure break the monitoring task
+        logger.warning(f"WebSocket broadcast failed: {e}")
 
     logger.info(f"Status change: {device.code} {previous_status} → {new_status} ({reason})")
 
