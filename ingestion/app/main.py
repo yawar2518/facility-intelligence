@@ -125,22 +125,21 @@ async def receive_heartbeat(
                        f"in facility '{payload.facility_code}'"
             )
 
-        # Step 2: Update device last_heartbeat + status
-        new_status = 'DEGRADED' if payload.error_codes else 'ONLINE'
+        # Step 2: Update device last_heartbeat
+        # Only update last_heartbeat — Celery checker owns status transitions
         await db.execute(
             text("""
                 UPDATE hierarchy_device
                 SET last_heartbeat = :ts,
-                    status = :status,
                     updated_at = NOW()
                 WHERE id = :device_id
             """),
             {
-                "ts": payload.timestamp,
-                "status": new_status,
+                "ts": ts,
                 "device_id": str(device.id),
             }
         )
+
 
         # Step 3: Write raw heartbeat record
         heartbeat_id = str(uuid.uuid4())
@@ -166,7 +165,7 @@ async def receive_heartbeat(
 
         logger.info(
             f"Heartbeat received: {payload.device_code} "
-            f"@ {payload.facility_code} → {new_status}"
+            f"@ {payload.facility_code} → hearbeat updated"
         )
 
         return IngestionResponse(
