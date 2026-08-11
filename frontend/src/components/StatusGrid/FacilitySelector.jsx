@@ -1,16 +1,26 @@
 function FacilitySelector({ facilities, selectedId, onSelect }) {
   return (
-    <div className="flex items-center gap-3">
-      <label className="text-gray-400 text-sm">Facility:</label>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>Facility</span>
       <select
         value={selectedId || ''}
         onChange={(e) => onSelect(e.target.value)}
-        className="bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border-2)',
+          color: 'var(--text-1)',
+          borderRadius: '5px',
+          padding: '6px 10px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          outline: 'none',
+          fontFamily: 'Inter, sans-serif',
+        }}
       >
-        <option value="" disabled>Select a facility...</option>
-        {facilities.map((facility) => (
-          <option key={facility.id} value={facility.id}>
-            {facility.name} ({facility.code})
+        <option value="" disabled>Select facility...</option>
+        {facilities.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.name} ({f.code})
           </option>
         ))}
       </select>

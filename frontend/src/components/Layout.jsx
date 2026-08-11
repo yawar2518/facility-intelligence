@@ -1,5 +1,17 @@
-import { Outlet, NavLink } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  Grid2x2,
+  Activity,
+  LogOut,
+  Eye,
+} from 'lucide-react'
+
+const navItems = [
+  { to: '/', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { to: '/status', label: 'Status Grid', icon: Grid2x2 },
+  { to: '/timeline', label: 'Timeline', icon: Activity },
+]
 
 function Layout() {
   const navigate = useNavigate()
@@ -11,71 +23,123 @@ function Layout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-950 text-gray-100">
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)' }}>
 
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+      <aside style={{
+        width: '220px',
+        background: 'var(--surface)',
+        borderRight: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+      }}>
 
         {/* Logo */}
-        <div className="p-6 border-b border-gray-800">
-          <h1 className="text-lg font-bold text-white">Facility Intelligence</h1>
-          <p className="text-xs text-gray-500 mt-1">Operations Platform</p>
+        <div style={{
+          padding: '16px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '5px',
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border-2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Eye size={12} color="#707070" strokeWidth={1.5}/>
+          </div>
+          <p style={{
+            fontSize: '13px',
+            fontWeight: 500,
+            color: 'var(--text-1)',
+          }}>
+            Argus
+          </p>
         </div>
 
-        {/* Nav links */}
-        <nav className="flex-1 p-4 space-y-1">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-              }`
-            }
-          >
-            Overview
-          </NavLink>
-          <NavLink
-            to="/status"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-              }`
-            }
-          >
-            Status Grid
-          </NavLink>
-          <NavLink
-            to="/timeline"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
-              }`
-            }
-          >
-            Event Timeline
-          </NavLink>
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '6px' }}>
+          {navItems.map(({ to, label, icon: Icon, exact }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={exact}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 10px',
+                borderRadius: '5px',
+                marginBottom: '1px',
+                fontSize: '13px',
+                fontWeight: 400,
+                color: isActive ? 'var(--text-1)' : 'var(--text-2)',
+                background: isActive ? 'var(--surface-2)' : 'transparent',
+                textDecoration: 'none',
+                cursor: 'pointer',
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    size={14}
+                    strokeWidth={1.5}
+                    color={isActive ? '#EDEDED' : '#444'}
+                  />
+                  {label}
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-800">
+        {/* Sign out */}
+        <div style={{
+          padding: '6px',
+          borderTop: '1px solid var(--border)',
+        }}>
           <button
             onClick={handleLogout}
-            className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors text-left"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 10px',
+              background: 'transparent',
+              border: 'none',
+              borderRadius: '5px',
+              color: 'var(--text-3)',
+              fontSize: '13px',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--surface-2)'
+              e.currentTarget.style.color = 'var(--text-2)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.color = 'var(--text-3)'
+            }}
           >
-            Logout
+            <LogOut size={14} strokeWidth={1.5} color="#555"/>
+            Sign out
           </button>
         </div>
+
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      {/* Main */}
+      <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg)' }}>
         <Outlet />
       </main>
 

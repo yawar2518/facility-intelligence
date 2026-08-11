@@ -82,55 +82,94 @@ useEffect(() => {
     <div className="p-8">
 
       {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Status Grid</h2>
-          <p className="text-gray-500 mt-1">
-            Live device status across all areas and lanes
-          </p>
-        </div>
+      {/* Page header */}
+<div style={{
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: '24px',
+  paddingBottom: '16px',
+  borderBottom: '1px solid var(--border)',
+}}>
+  <div>
+    <h1 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-1)', marginBottom: '3px' }}>
+      Status Grid
+    </h1>
+    <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>
+      Live device status across all areas and lanes
+    </p>
+  </div>
 
-        {/* Facility selector */}
-        {!facilitiesLoading && (
-          <FacilitySelector
-            facilities={facilities}
-            selectedId={selectedFacilityId}
-            onSelect={setSelectedFacilityId}
-          />
-        )}
-      </div>
+  {!facilitiesLoading && (
+    <FacilitySelector
+      facilities={facilities}
+      selectedId={selectedFacilityId}
+      onSelect={setSelectedFacilityId}
+    />
+  )}
+</div>
 
       {/* Empty state — no facility selected yet */}
+      {/* Empty state */}
       {!selectedFacilityId && (
-        <div className="text-center py-24">
-          <p className="text-gray-600 text-lg">Select a facility to view device status</p>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '400px',
+        }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>
+            Select a facility to view device status
+          </p>
         </div>
       )}
 
-      {/* Loading state */}
+      {/* Loading */}
       {treeLoading && (
-        <div className="text-center py-24">
-          <p className="text-gray-500">Loading device tree...</p>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '400px',
+        }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>Loading...</p>
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error */}
       {error && (
-        <p className="text-red-400">{error}</p>
+        <p style={{ fontSize: '12px', color: 'var(--offline)' }}>{error}</p>
       )}
 
-      {/* Device tree — areas and their lanes */}
+      {/* Device tree */}
       {tree && !treeLoading && (
         <div>
+
           {/* Facility summary bar */}
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-6 flex items-center gap-6">
-            <div>
-              <p className="text-white font-semibold">{tree.facility_name}</p>
-              <p className="text-gray-500 text-sm">{tree.facility_code}</p>
-            </div>
-            <div className="text-gray-600 text-sm">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            padding: '10px 14px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            marginBottom: '16px',
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
+              {tree.facility_name}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
+              {tree.facility_code}
+            </span>
+            <span style={{
+              fontSize: '11px',
+              color: 'var(--text-3)',
+              paddingLeft: '16px',
+              borderLeft: '1px solid var(--border)',
+            }}>
               {tree.areas.length} areas
-            </div>
+            </span>
           </div>
 
           {/* Area panels */}
@@ -141,13 +180,16 @@ useEffect(() => {
               onDeviceClick={setSelectedDevice}
             />
           ))}
-          {selectedDevice && (
-            <DeviceDetailPanel
-              device={selectedDevice}
-              onClose={() => setSelectedDevice(null)}
-            />
-          )}
+
         </div>
+      )}
+
+      {/* Device detail panel */}
+      {selectedDevice && (
+        <DeviceDetailPanel
+          device={selectedDevice}
+          onClose={() => setSelectedDevice(null)}
+        />
       )}
 
     </div>

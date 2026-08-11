@@ -1,56 +1,86 @@
 function FacilityCard({ facility }) {
   const health = facility.health
 
-  // Determine color based on health score
-  const getHealthColor = (score) => {
-    if (score >= 90) return 'text-green-400'
-    if (score >= 70) return 'text-yellow-400'
-    return 'text-red-400'
-  }
-
-  const getBorderColor = (score) => {
-    if (score >= 90) return 'border-green-800'
-    if (score >= 70) return 'border-yellow-800'
-    return 'border-red-800'
-  }
+  const healthColor = health.health_score >= 90
+    ? 'var(--online)'
+    : health.health_score >= 70
+    ? 'var(--degraded)'
+    : 'var(--offline)'
 
   return (
-    <div className={`bg-gray-900 border rounded-xl p-6 ${getBorderColor(health.health_score)}`}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '8px',
+        padding: '16px 20px',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-2)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
 
-      {/* Facility name and code */}
-      <div className="mb-4">
-        <h3 className="text-white font-semibold text-lg">{facility.name}</h3>
-        <p className="text-gray-500 text-sm">{facility.code}</p>
-      </div>
-
-      {/* Health score — big number */}
-      <div className="mb-4">
-        <span className={`text-4xl font-bold ${getHealthColor(health.health_score)}`}>
+      {/* Top row — name + health score inline */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: '12px',
+      }}>
+        <div>
+          <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
+            {facility.name}
+          </p>
+          <p style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px' }}>
+            {facility.code} · {health.total_devices} devices
+          </p>
+        </div>
+        <span style={{
+          fontSize: '13px',
+          fontWeight: 600,
+          color: healthColor,
+          background: `${healthColor}15`,
+          padding: '2px 8px',
+          borderRadius: '4px',
+        }}>
           {health.health_score}%
         </span>
-        <span className="text-gray-500 text-sm ml-2">health score</span>
       </div>
 
-      {/* Device counts */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-gray-800 rounded-lg p-2">
-          <p className="text-green-400 font-bold text-lg">{health.online}</p>
-          <p className="text-gray-500 text-xs">Online</p>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-2">
-          <p className="text-yellow-400 font-bold text-lg">{health.degraded}</p>
-          <p className="text-gray-500 text-xs">Degraded</p>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-2">
-          <p className="text-red-400 font-bold text-lg">{health.offline}</p>
-          <p className="text-gray-500 text-xs">Offline</p>
-        </div>
+      {/* Thin progress bar */}
+      <div style={{
+        height: '2px',
+        background: 'var(--border)',
+        borderRadius: '2px',
+        marginBottom: '14px',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          width: `${health.health_score}%`,
+          background: healthColor,
+          borderRadius: '2px',
+        }}/>
       </div>
 
-      {/* Total devices */}
-      <p className="text-gray-600 text-xs mt-3">
-        {health.total_devices} devices total
-      </p>
+      {/* Stats row — inline, not boxed */}
+      <div style={{ display: 'flex', gap: '16px' }}>
+        {[
+          { label: 'Online', value: health.online, color: '#22C55E' },
+          { label: 'Degraded', value: health.degraded, color: '#F59E0B' },
+          { label: 'Offline', value: health.offline, color: '#EF4444' },
+          { label: 'Unknown', value: health.unknown, color: '#444' },
+        ].map(({ label, value, color }) => (
+          <div key={label}>
+            <p style={{ fontSize: '16px', fontWeight: 600, color, lineHeight: 1 }}>
+              {value}
+            </p>
+            <p style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '3px' }}>
+              {label}
+            </p>
+          </div>
+        ))}
+      </div>
 
     </div>
   )

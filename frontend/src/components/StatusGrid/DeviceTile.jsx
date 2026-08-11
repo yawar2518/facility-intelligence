@@ -1,54 +1,98 @@
 function DeviceTile({ device, onClick }) {
 
-  // Status color mapping — background and text
-  const statusStyles = {
-    ONLINE:      'bg-green-900 border-green-700 text-green-400',
-    OFFLINE:     'bg-red-900 border-red-700 text-red-400',
-    DEGRADED:    'bg-yellow-900 border-yellow-700 text-yellow-400',
-    UNKNOWN:     'bg-gray-800 border-gray-600 text-gray-400',
-    MAINTENANCE: 'bg-blue-900 border-blue-700 text-blue-400',
+  const statusBorder = {
+    ONLINE:      'var(--online)',
+    OFFLINE:     'var(--offline)',
+    DEGRADED:    'var(--degraded)',
+    UNKNOWN:     'var(--unknown)',
+    MAINTENANCE: 'var(--text-3)',
   }
 
-  // Status dot indicator
-  const dotStyles = {
-    ONLINE:      'bg-green-400',
-    OFFLINE:     'bg-red-400',
-    DEGRADED:    'bg-yellow-400',
-    UNKNOWN:     'bg-gray-400',
-    MAINTENANCE: 'bg-blue-400',
+  const statusDot = {
+    ONLINE:      'var(--online)',
+    OFFLINE:     'var(--offline)',
+    DEGRADED:    'var(--degraded)',
+    UNKNOWN:     'var(--unknown)',
+    MAINTENANCE: 'var(--text-3)',
   }
 
-  // Friendly device type labels
-  const deviceTypeLabels = {
-    BARRIER_GATE:     'Barrier Gate',
-    LPR_CAMERA:       'LPR Camera',
+  const statusLabel = {
+    ONLINE:      'var(--online)',
+    OFFLINE:     'var(--offline)',
+    DEGRADED:    'var(--degraded)',
+    UNKNOWN:     'var(--unknown)',
+    MAINTENANCE: 'var(--text-3)',
+  }
+
+  const deviceTypeShort = {
+    BARRIER_GATE:     'Gate',
+    LPR_CAMERA:       'Camera',
     KIOSK:            'Kiosk',
     INTERCOM:         'Intercom',
-    TICKET_DISPENSER: 'Ticket Disp.',
+    TICKET_DISPENSER: 'Dispenser',
     SENSOR:           'Sensor',
   }
 
-  const style = statusStyles[device.status] || statusStyles.UNKNOWN
-  const dot = dotStyles[device.status] || dotStyles.UNKNOWN
+  const border = statusBorder[device.status] || statusBorder.UNKNOWN
+  const dot = statusDot[device.status] || statusDot.UNKNOWN
+  const label = statusLabel[device.status] || statusLabel.UNKNOWN
 
   return (
-    <div className={`border rounded-lg p-3 ${style} cursor-pointer hover:opacity-80 transition-opacity`} onClick={onClick}>
-
-      {/* Top row — code and status dot */}
-      <div className="flex items-center justify-between mb-1">
-        <span className="font-mono font-bold text-sm">{device.code}</span>
-        <span className={`w-2 h-2 rounded-full ${dot}`}></span>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderLeft: `3px solid ${border}`,
+        borderRadius: '6px',
+        padding: '12px',
+        cursor: 'pointer',
+        position: 'relative',
+      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-2)'}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = 'var(--border)'
+        e.currentTarget.style.borderLeftColor = border
+      }}
+    >
+      {/* Top row — code and dot */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <span style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '12px',
+          fontWeight: 500,
+          color: 'var(--text-1)',
+        }}>
+          {device.code}
+        </span>
+        <span style={{
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          background: dot,
+          flexShrink: 0,
+        }}/>
       </div>
 
       {/* Device type */}
-      <p className="text-xs opacity-75 mb-1">
-        {deviceTypeLabels[device.device_type] || device.device_type}
+      <p style={{
+        fontSize: '11px',
+        color: 'var(--text-3)',
+        marginBottom: '4px',
+      }}>
+        {deviceTypeShort[device.device_type] || device.device_type}
       </p>
 
-      {/* Status label */}
-      <p className="text-xs font-medium">{device.status}</p>
+      {/* Status */}
+      <p style={{
+        fontSize: '11px',
+        fontWeight: 500,
+        color: label,
+      }}>
+        {device.status}
+      </p>
+
     </div>
-    
   )
 }
 
