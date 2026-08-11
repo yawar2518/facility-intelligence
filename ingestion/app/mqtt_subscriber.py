@@ -112,23 +112,20 @@ async def process_heartbeat(facility_code: str, device_code: str, payload: dict)
                 ts = datetime.now(timezone.utc)
 
             error_codes = payload.get("error_codes", [])
-            new_status = "DEGRADED" if error_codes else "ONLINE"
 
-            # Update device status
             await db.execute(
                 text("""
                     UPDATE hierarchy_device
                     SET last_heartbeat = :ts,
-                        status = :status,
                         updated_at = NOW()
                     WHERE id = :device_id
                 """),
                 {
                     "ts": ts,
-                    "status": new_status,
                     "device_id": str(device.id),
                 }
             )
+
 
             # Write heartbeat record
             await db.execute(
@@ -155,7 +152,7 @@ async def process_heartbeat(facility_code: str, device_code: str, payload: dict)
 
             await db.commit()
             logger.info(
-                f"MQTT heartbeat: {device_code} @ {facility_code} → {new_status}"
+                f"MQTT heartbeat: {device_code} @ {facility_code} → hearbeat updated"
             )
 
         except Exception as e:
