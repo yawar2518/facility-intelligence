@@ -198,8 +198,8 @@ Facility (Downtown Garage, Airport Parking, Mall Complex)
 | Week | Focus | Status |
 |---|---|---|
 | Week 1 | Data hierarchy, ingestion, TimescaleDB, MQTT, simulator | ✅ Complete |
-| Week 2 | Health monitoring, Celery tasks, React dashboard | 🔄 In Progress |
-| Week 3 | Anomaly detection, forecasting, alerting engine | ⏳ Planned |
+| Week 2 | Health monitoring, Celery tasks, React dashboard | ✅ Complete |
+| Week 3 | Anomaly detection, forecasting, alerting engine | 🔄 In Progress |
 | Week 4 | RBAC, deployment, polish, demo video | ⏳ Planned |
 
 ## Author
