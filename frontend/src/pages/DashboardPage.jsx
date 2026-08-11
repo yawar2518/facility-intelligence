@@ -2,10 +2,13 @@ import { useFacilities } from '../hooks/useFacilities'
 import { useState, useEffect } from 'react'
 import FacilityCard from '../components/FacilityCard'
 import { getFacilityStatusChanges } from '../api/monitoring'
+import useAnomalies from '../hooks/useAnomalies'
+import AnomalyFeed from '../components/AnomalyFeed'
 
 function DashboardPage() {
   const { facilities, loading, error } = useFacilities()
   const [recentChanges, setRecentChanges] = useState([])
+  const { anomalies, loading: anomalyLoading, error: anomalyError, refetch } = useAnomalies({ is_acknowledged: false })
 
   // Fetch recent events from all facilities combined
   useEffect(() => {
@@ -75,6 +78,41 @@ function DashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Anomaly Feed */}
+<div style={{
+  background:   'var(--surface)',
+  border:       '1px solid var(--border)',
+  borderRadius: '8px',
+  padding:      '20px',
+  marginTop:    '24px',
+}}>
+  <h2 style={{
+    fontSize:     '13px',
+    fontWeight:   600,
+    color:        'var(--text-1)',
+    margin:       '0 0 4px 0',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  }}>
+    Anomaly Feed
+  </h2>
+  <p style={{
+    fontSize:    '12px',
+    color:       'var(--text-2)',
+    margin:      '0 0 16px 0',
+  }}>
+    Unacknowledged anomalies across all facilities
+  </p>
+
+  <AnomalyFeed
+    anomalies={anomalyLoading ? [] : anomalies}
+    loading={anomalyLoading}
+    error={anomalyError}
+    onRefetch={refetch}
+    limit={null}
+  />
+</div>
 
       {/* Recent events */}
       {recentChanges.length > 0 && (

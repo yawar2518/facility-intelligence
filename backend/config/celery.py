@@ -1,5 +1,6 @@
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # Tell Celery which Django settings to use
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local')
@@ -23,5 +24,12 @@ app.conf.beat_schedule = {
         'options': {
             'expires': 25,  # Discard if still queued after 25s
         },
+    },
+
+    'detect-traffic-anomalies': {
+    'task': 'ml.detect_traffic_anomalies',
+    'schedule': crontab(minute=5, hour='*'),
+    # Runs at 5 minutes past every hour
+    # e.g. 14:05, 15:05 — gives the hour time to fully complete
     },
 }

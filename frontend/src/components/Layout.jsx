@@ -5,12 +5,15 @@ import {
   Activity,
   LogOut,
   Eye,
+  AlertTriangle
 } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, exact: true },
   { to: '/status', label: 'Status Grid', icon: Grid2x2 },
   { to: '/timeline', label: 'Timeline', icon: Activity },
+  { to: '/anomalies', label: 'Anomalies', icon: AlertTriangle },
+  
 ]
 
 function Layout() {
