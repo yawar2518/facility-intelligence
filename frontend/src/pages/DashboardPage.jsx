@@ -110,7 +110,7 @@ function DashboardPage() {
     loading={anomalyLoading}
     error={anomalyError}
     onRefetch={refetch}
-    limit={null}
+    limit={10}
   />
 </div>
 

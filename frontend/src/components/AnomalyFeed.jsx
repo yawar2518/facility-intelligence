@@ -126,7 +126,7 @@ function AnomalyRow({ anomaly, onAcknowledge }) {
   )
 }
 
-export default function AnomalyFeed({ anomalies, loading, error, onRefetc, limit = 10  }) {
+export default function AnomalyFeed({ anomalies, loading, error, onRefetch, limit = 10  }) {
 
   async function handleAcknowledge(id) {
     try {

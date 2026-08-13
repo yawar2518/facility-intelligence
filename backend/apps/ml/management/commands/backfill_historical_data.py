@@ -124,9 +124,9 @@ class Command(BaseCommand):
 
                     # How many events this hour for this lane
                     count = int(BASE_EVENTS_PER_HOUR * multiplier)
-                    # Add ±20% jitter so days aren't identical
+                    # Add ±40% jitter so baseline has realistic variance
                     count = max(0, count + random.randint(
-                        -int(count * 0.2), int(count * 0.2)
+                        -int(count * 0.4), int(count * 0.4)
                     ))
 
                     for _ in range(count):
