@@ -274,28 +274,28 @@ def run():
     )
 
     Device.objects.create(
-        lane=ap_t2_entry, name="Barrier Gate #1", code="BG-01",
+        lane=ap_t2_entry, name="Barrier Gate T2 #1", code="T2-BG-01",
         device_type=Device.DeviceType.BARRIER_GATE,
         serial_number="AP-BG-003", firmware_version="v3.2.1",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "10.0.2.10"}
     )
     Device.objects.create(
-        lane=ap_t2_entry, name="LPR Camera #1", code="LPR-01",
+        lane=ap_t2_entry, name="LPR Camera T2 #1", code="T2-LPR-01",
         device_type=Device.DeviceType.LPR_CAMERA,
         serial_number="AP-LPR-002", firmware_version="v2.1.0",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "10.0.2.11"}
     )
     Device.objects.create(
-        lane=ap_t2_exit, name="Barrier Gate #2", code="BG-02",
+        lane=ap_t2_exit, name="Barrier Gate T2 #2", code="T2-BG-02",
         device_type=Device.DeviceType.BARRIER_GATE,
         serial_number="AP-BG-004", firmware_version="v3.2.1",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "10.0.2.12"}
     )
     Device.objects.create(
-        lane=ap_t2_exit, name="Payment Kiosk #1", code="PK-01",
+        lane=ap_t2_exit, name="Payment Kiosk T2 #1", code="T2-PK-01",
         device_type=Device.DeviceType.KIOSK,
         serial_number="AP-PK-002", firmware_version="v4.0.2",
         heartbeat_timeout_seconds=60,
@@ -391,28 +391,28 @@ def run():
     )
 
     Device.objects.create(
-        lane=mc_b2_entry, name="Barrier Gate #1", code="BG-01",
+        lane=mc_b2_entry, name="Barrier Gate B2 #1", code="B2-BG-01",
         device_type=Device.DeviceType.BARRIER_GATE,
         serial_number="MC-BG-003", firmware_version="v3.2.1",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "172.16.2.10"}
     )
     Device.objects.create(
-        lane=mc_b2_entry, name="LPR Camera #1", code="LPR-01",
+        lane=mc_b2_entry, name="LPR Camera B2 #1", code="B2-LPR-01",
         device_type=Device.DeviceType.LPR_CAMERA,
         serial_number="MC-LPR-002", firmware_version="v2.1.0",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "172.16.2.11"}
     )
     Device.objects.create(
-        lane=mc_b2_exit, name="Barrier Gate #2", code="BG-02",
+        lane=mc_b2_exit, name="Barrier Gate B2 #2", code="B2-BG-02",
         device_type=Device.DeviceType.BARRIER_GATE,
         serial_number="MC-BG-004", firmware_version="v3.2.1",
         heartbeat_timeout_seconds=60,
         metadata={"ip": "172.16.2.12"}
     )
     Device.objects.create(
-        lane=mc_b2_exit, name="Payment Kiosk #1", code="PK-01",
+        lane=mc_b2_exit, name="Payment Kiosk B2 #1", code="B2-PK-01",
         device_type=Device.DeviceType.KIOSK,
         serial_number="MC-PK-002", firmware_version="v4.0.2",
         heartbeat_timeout_seconds=60,

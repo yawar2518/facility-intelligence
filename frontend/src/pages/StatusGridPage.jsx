@@ -5,6 +5,7 @@ import { useFacilityDeviceTree } from '../hooks/useFacilityDeviceTree'
 import FacilitySelector from '../components/StatusGrid/FacilitySelector'
 import DeviceDetailPanel from '../components/StatusGrid/DeviceDetailPanel'
 import AreaPanel from '../components/StatusGrid/AreaPanel'
+import ForecastChart from '../components/ForecastChart'
 
 function StatusGridPage() {
   // Which facility is currently selected
@@ -18,8 +19,16 @@ function StatusGridPage() {
 
   const [selectedDevice, setSelectedDevice] = useState(null)
 
+  const [selectedLaneId, setSelectedLaneId] = useState(null)
+  const [selectedLaneName, setSelectedLaneName] = useState('')
+
   // WebSocket connection for live updates
 const wsRef = useRef(null)
+
+useEffect(() => {
+  setSelectedLaneId(null)
+  setSelectedLaneName('')
+  }, [selectedFacilityId])
 
 useEffect(() => {
   // Only connect when a facility is selected and tree is loaded
@@ -192,8 +201,149 @@ useEffect(() => {
         />
       )}
 
+      {/* Forecast Chart */}
+
+<div style={{
+
+  marginTop: '24px',
+
+  background: 'var(--surface)',
+
+  border: '1px solid var(--border)',
+
+  borderRadius: '8px',
+
+  padding: '20px',
+
+}}>
+
+  <div style={{
+
+    display: 'flex',
+
+    alignItems: 'center',
+
+    justifyContent: 'space-between',
+
+    marginBottom: '16px',
+
+  }}>
+
+    <div>
+
+      <h2 style={{
+
+        fontSize: '13px', fontWeight: 600,
+
+        color: 'var(--text-1)', margin: '0 0 2px 0',
+
+        textTransform: 'uppercase', letterSpacing: '0.05em',
+
+      }}>
+
+        Lane Forecast
+
+      </h2>
+
+      <p style={{ fontSize: '12px', color: 'var(--text-2)', margin: 0 }}>
+
+        Prophet 24-hour traffic prediction
+
+      </p>
+
+    </div>
+
+
+
+    {/* Lane selector dropdown */}
+
+    <select
+
+      value={selectedLaneId ?? ''}
+
+      onChange={e => {
+
+        const lane = tree.areas
+
+          .flatMap(a => a.lanes)
+
+          .find(l => l.id === e.target.value)
+
+        setSelectedLaneId(e.target.value || null)
+
+        setSelectedLaneName(lane?.name ?? '')
+
+      }}
+
+      style={{
+
+        background:   'var(--surface-2)',
+
+        border:       '1px solid var(--border)',
+
+        borderRadius: '6px',
+
+        padding:      '6px 10px',
+
+        color:        'var(--text-1)',
+
+        fontSize:     '12px',
+
+        cursor:       'pointer',
+
+        outline:      'none',
+
+      }}
+
+    >
+
+      <option value=''>Select a lane</option>
+
+      {(tree?.areas ?? []).flatMap(area =>
+
+        area.lanes.map(lane => (
+
+          <option key={lane.id} value={lane.id}>
+
+            {area.name} — {lane.name}
+
+          </option>
+
+        ))
+
+      )}
+
+    </select>
+
+  </div>
+
+
+
+  {selectedLaneId ? (
+
+    <ForecastChart
+
+      laneId={selectedLaneId}
+
+      laneName={selectedLaneName}
+
+    />
+
+  ) : (
+
+    <p style={{ fontSize: '13px', color: 'var(--text-2)' }}>
+
+      Select a lane above to view its forecast.
+
+    </p>
+
+  )}
+
+</div>
+
     </div>
   )
+
 }
 
 export default StatusGridPage

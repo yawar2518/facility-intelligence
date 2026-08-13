@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import StatusGridPage from './pages/StatusGridPage'
 import TimelinePage from './pages/TimelinePage'
+import AnomaliesPage from './pages/AnomaliesPage'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -24,6 +25,7 @@ function App() {
         <Route index element={<DashboardPage />} />
         <Route path="status" element={<StatusGridPage />} />
         <Route path="timeline" element={<TimelinePage />} />
+        <Route path="/anomalies" element={<AnomaliesPage />} />
       </Route>
     </Routes>
   )
