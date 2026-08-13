@@ -32,4 +32,21 @@ app.conf.beat_schedule = {
     # Runs at 5 minutes past every hour
     # e.g. 14:05, 15:05 — gives the hour time to fully complete
     },
+
+    'train-isolation-forest': {
+    'task': 'ml.train_isolation_forest',
+    'schedule': crontab(minute=0, hour=2),
+    # Runs daily at 2:00 AM UTC
+    # Retrains on fresh historical data every night
+},
+
+'detect-isolation-forest-anomalies': {
+    'task': 'ml.detect_isolation_forest_anomalies',
+    'schedule': crontab(minute=10, hour='*'),
+    # Runs at 10 minutes past every hour
+    # After z-score runs at :05, IF runs at :10
+    # Slight offset avoids both tasks hitting DB simultaneously
+},
+
 }
+
