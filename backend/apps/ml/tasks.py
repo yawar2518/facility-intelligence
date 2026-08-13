@@ -495,3 +495,116 @@ def detect_isolation_forest_anomalies():
 
     logger.info(f"IF detection complete — {saved} anomalies saved")
     return f"{saved} anomalies saved"
+
+
+@shared_task(name='ml.train_and_forecast')
+def train_and_forecast():
+    """
+    Daily task: trains a Prophet model per lane on historical
+    vehicle event counts and stores 24-hour forecasts.
+    """
+    from apps.ml.models import Forecast
+    from apps.hierarchy.models import Lane
+    from prophet import Prophet
+
+    logger.info("Starting Prophet forecasting...")
+
+    # Query hourly event counts per lane for the last 56 days
+    sql = """
+        SELECT
+            lane_id,
+            DATE_TRUNC('hour', timestamp) AS hour_slot,
+            COUNT(*)                      AS event_count
+        FROM ingestion_vehicle_events
+        WHERE timestamp >= NOW() - INTERVAL '56 days'
+        GROUP BY lane_id, hour_slot
+        ORDER BY lane_id, hour_slot
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+
+    if not rows:
+        logger.warning("No event data for forecasting")
+        return "No data"
+
+    df = pd.DataFrame(rows, columns=['lane_id', 'hour_slot', 'event_count'])
+    df['lane_id']   = df['lane_id'].astype(str)
+    df['hour_slot'] = pd.to_datetime(df['hour_slot'], utc=True)
+
+    lanes_processed = 0
+    forecasts_saved = 0
+    now = datetime.now(timezone.utc)
+
+    # Train one Prophet model per lane
+    for lane_id, lane_df in df.groupby('lane_id'):
+        try:
+            lane = Lane.objects.get(id=lane_id)
+        except Lane.DoesNotExist:
+            continue
+
+        # Prophet requires columns named 'ds' and 'y'
+        # It also requires timezone-naive datetimes
+        prophet_df = lane_df.rename(columns={
+            'hour_slot':   'ds',
+            'event_count': 'y'
+        })[['ds', 'y']]
+        prophet_df['ds'] = prophet_df['ds'].dt.tz_localize(None)
+
+        # Need at least 48 data points for a meaningful forecast
+        if len(prophet_df) < 48:
+            logger.warning(f"Insufficient data for lane {lane.name}: {len(prophet_df)} rows")
+            continue
+
+        try:
+            # Train Prophet
+            # daily_seasonality and weekly_seasonality capture
+            # rush hour patterns and weekday vs weekend differences
+            model = Prophet(
+                daily_seasonality=True,
+                weekly_seasonality=True,
+                yearly_seasonality=False,  # not enough data for yearly
+                interval_width=0.80,       # 80% confidence interval
+            )
+            model.fit(prophet_df)
+
+            # Generate future dataframe for next 24 hours
+            future = model.make_future_dataframe(
+                periods=24,
+                freq='h',
+                include_history=False  # only future, not historical
+            )
+            forecast = model.predict(future)
+
+            # Save forecasts — use update_or_create to replace old ones
+            for _, row in forecast.iterrows():
+                forecast_time = row['ds'].replace(tzinfo=timezone.utc)
+
+                # Only save future forecasts
+                if forecast_time <= now:
+                    continue
+
+                Forecast.objects.update_or_create(
+                    lane=lane,
+                    forecast_for=forecast_time,
+                    defaults={
+                        'facility':      lane.area.facility,
+                        'predicted':     max(0, row['yhat']),
+                        'predicted_low': max(0, row['yhat_lower']),
+                        'predicted_high': max(0, row['yhat_upper']),
+                    }
+                )
+                forecasts_saved += 1
+
+            lanes_processed += 1
+            logger.info(f"Forecast done: {lane.name} ({lane.area.facility.code})")
+
+        except Exception as e:
+            logger.error(f"Prophet failed for lane {lane.name}: {e}")
+            continue
+
+    logger.info(
+        f"Forecasting complete — {lanes_processed} lanes, "
+        f"{forecasts_saved} forecasts saved"
+    )
+    return f"{lanes_processed} lanes forecasted"

@@ -47,3 +47,8 @@ export async function acknowledgeAnomaly(anomalyId) {
   const response = await client.post(`/ml/anomalies/${anomalyId}/acknowledge/`)
   return response.data
 }
+
+export async function getLaneForecast(laneId) {
+  const response = await client.get(`/ml/forecasts/?lane=${laneId}`)
+  return response.data
+}

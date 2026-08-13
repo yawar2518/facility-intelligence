@@ -60,3 +60,43 @@ class Anomaly(models.Model):
 
     def __str__(self):
         return f"{self.anomaly_type} @ {self.lane} — {self.sigma_score:.1f}σ"
+
+
+class Forecast(models.Model):
+    """
+    Stores Prophet's per-lane hourly traffic forecasts.
+    
+    Each row = one lane's predicted event count for one future hour.
+    Regenerated daily by the train_and_forecast Celery task.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    facility = models.ForeignKey(
+        Facility, on_delete=models.CASCADE, related_name='forecasts'
+    )
+    lane = models.ForeignKey(
+        Lane, on_delete=models.CASCADE, related_name='forecasts'
+    )
+
+    # The hour this forecast covers
+    forecast_for  = models.DateTimeField()
+
+    # Prophet's predictions
+    predicted     = models.FloatField()   # yhat — expected event count
+    predicted_low = models.FloatField()   # yhat_lower — lower bound
+    predicted_high = models.FloatField()  # yhat_upper — upper bound
+
+    # When this forecast was generated
+    generated_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['lane', 'forecast_for']
+        indexes = [
+            models.Index(fields=['lane', 'forecast_for']),
+            models.Index(fields=['facility', 'forecast_for']),
+        ]
+        # One forecast per lane per hour — no duplicates
+        unique_together = [['lane', 'forecast_for']]
+
+    def __str__(self):
+        return f"Forecast {self.lane} @ {self.forecast_for} → {self.predicted:.1f}"

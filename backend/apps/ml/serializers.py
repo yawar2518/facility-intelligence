@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Anomaly
-
+from .models import Anomaly, Forecast
 
 class AnomalySerializer(serializers.ModelSerializer):
     anomaly_type_display = serializers.CharField(
@@ -29,3 +28,20 @@ class AnomalySerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id', 'detected_at', 'facility_name', 'facility_code', 'lane_name'
         ]
+
+class ForecastSerializer(serializers.ModelSerializer):
+    lane_name     = serializers.CharField(source='lane.name', read_only=True)
+    facility_name = serializers.CharField(source='facility.name', read_only=True)
+    facility_code = serializers.CharField(source='facility.code', read_only=True)
+
+    class Meta:
+        model  = Forecast
+        fields = [
+            'id',
+            'facility', 'facility_name', 'facility_code',
+            'lane', 'lane_name',
+            'forecast_for',
+            'predicted', 'predicted_low', 'predicted_high',
+            'generated_at',
+        ]
+        read_only_fields = fields

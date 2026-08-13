@@ -48,5 +48,13 @@ app.conf.beat_schedule = {
     # Slight offset avoids both tasks hitting DB simultaneously
 },
 
+'train-and-forecast': {
+    'task': 'ml.train_and_forecast',
+    'schedule': crontab(minute=30, hour=2),
+    # Runs daily at 2:30 AM UTC
+    # After IsolationForest training at 2:00 AM
+    # so they don't compete for CPU simultaneously
+},
+
 }
 

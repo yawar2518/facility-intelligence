@@ -9,8 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Anomaly
-from .serializers import AnomalySerializer
+from .models import Anomaly, Forecast
+from .serializers import AnomalySerializer, ForecastSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -55,3 +55,33 @@ class AnomalyViewSet(viewsets.ReadOnlyModelViewSet):
 
         logger.info(f"Anomaly {anomaly.id} acknowledged")
         return Response(AnomalySerializer(anomaly).data)
+
+
+class ForecastViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only endpoints for Prophet lane forecasts.
+
+    List:   GET /api/v1/ml/forecasts/
+    Detail: GET /api/v1/ml/forecasts/{id}/
+
+    Filter by lane: /api/v1/ml/forecasts/?lane={lane_id}
+    Filter by facility: /api/v1/ml/forecasts/?facility={facility_id}
+    """
+    serializer_class   = ForecastSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends    = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields   = ['facility', 'lane']
+    ordering_fields    = ['forecast_for', 'predicted']
+    ordering           = ['forecast_for']
+
+    def get_queryset(self):
+        """
+        Only return future forecasts by default.
+        This keeps the response small and relevant.
+        """
+        from django.utils import timezone
+        return Forecast.objects.select_related(
+            'facility', 'lane'
+        ).filter(
+            forecast_for__gte=timezone.now()
+        ).order_by('lane', 'forecast_for')
