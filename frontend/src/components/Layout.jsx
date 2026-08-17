@@ -1,23 +1,29 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  Grid2x2,
-  Activity,
-  LogOut,
-  Eye,
-  AlertTriangle
+  LayoutDashboard, Grid2x2, Activity, LogOut, Eye,
+  AlertTriangle, Bell, Wrench, Trophy, User,
 } from 'lucide-react'
+import { useCurrentUser } from '../hooks/useCurrentUser'
 
 const navItems = [
-  { to: '/', label: 'Overview', icon: LayoutDashboard, exact: true },
-  { to: '/status', label: 'Status Grid', icon: Grid2x2 },
-  { to: '/timeline', label: 'Timeline', icon: Activity },
-  { to: '/anomalies', label: 'Anomalies', icon: AlertTriangle },
-  
+  { to: '/',            label: 'Overview',      icon: LayoutDashboard, exact: true },
+  { to: '/status',      label: 'Status Grid',   icon: Grid2x2 },
+  { to: '/timeline',    label: 'Timeline',      icon: Activity },
+  { to: '/anomalies',   label: 'Anomalies',     icon: AlertTriangle },
+  { to: '/alert-logs',  label: 'Alert Logs',    icon: Bell },
+  { to: '/maintenance', label: 'Maintenance',   icon: Wrench },
+  { to: '/sla',         label: 'SLA Dashboard', icon: Trophy },
 ]
+
+const ROLE_LABELS = {
+  ADMIN:            'Admin',
+  REGIONAL_MANAGER: 'Regional Manager',
+  FACILITY_OWNER:   'Facility Owner',
+}
 
 function Layout() {
   const navigate = useNavigate()
+  const { user } = useCurrentUser()
 
   const handleLogout = () => {
     localStorage.removeItem('access_token')
@@ -47,23 +53,14 @@ function Layout() {
           gap: '10px',
         }}>
           <div style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '5px',
-            background: 'var(--surface-2)',
-            border: '1px solid var(--border-2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: '24px', height: '24px', borderRadius: '5px',
+            background: 'var(--surface-2)', border: '1px solid var(--border-2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
             <Eye size={12} color="#707070" strokeWidth={1.5}/>
           </div>
-          <p style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            color: 'var(--text-1)',
-          }}>
+          <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
             Argus
           </p>
         </div>
@@ -76,27 +73,17 @@ function Layout() {
               to={to}
               end={exact}
               style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 10px',
-                borderRadius: '5px',
-                marginBottom: '1px',
-                fontSize: '13px',
-                fontWeight: 400,
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 10px', borderRadius: '5px', marginBottom: '1px',
+                fontSize: '13px', fontWeight: 400,
                 color: isActive ? 'var(--text-1)' : 'var(--text-2)',
                 background: isActive ? 'var(--surface-2)' : 'transparent',
-                textDecoration: 'none',
-                cursor: 'pointer',
+                textDecoration: 'none', cursor: 'pointer',
               })}
             >
               {({ isActive }) => (
                 <>
-                  <Icon
-                    size={14}
-                    strokeWidth={1.5}
-                    color={isActive ? '#EDEDED' : '#444'}
-                  />
+                  <Icon size={14} strokeWidth={1.5} color={isActive ? '#EDEDED' : '#444'} />
                   {label}
                 </>
               )}
@@ -104,26 +91,44 @@ function Layout() {
           ))}
         </nav>
 
+        {/* User profile */}
+        {user && (
+          <div style={{
+            padding: '10px 16px',
+            borderTop: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <User size={13} color="var(--text-2)" />
+              <div>
+                <div style={{ color: 'var(--text-1)', fontSize: '12px', fontWeight: 500 }}>
+                  {user.username}
+                </div>
+                <div style={{ color: 'var(--text-2)', fontSize: '11px' }}>
+                  {ROLE_LABELS[user.role] ?? user.role}
+                </div>
+                {user.role !== 'ADMIN' && user.facilities?.length > 0 && (
+                  <div style={{
+                    color: 'var(--text-3)', fontSize: '10px',
+                    fontFamily: 'JetBrains Mono, monospace', marginTop: '2px',
+                  }}>
+                    {user.facilities.map(f => f.code).join(', ')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sign out */}
-        <div style={{
-          padding: '6px',
-          borderTop: '1px solid var(--border)',
-        }}>
+        <div style={{ padding: '6px' }}>
           <button
             onClick={handleLogout}
             style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px 10px',
-              background: 'transparent',
-              border: 'none',
-              borderRadius: '5px',
-              color: 'var(--text-3)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
+              width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '6px 10px', background: 'transparent', border: 'none',
+              borderRadius: '5px', color: 'var(--text-3)', fontSize: '13px',
+              cursor: 'pointer', textAlign: 'left',
             }}
             onMouseEnter={e => {
               e.currentTarget.style.background = 'var(--surface-2)'

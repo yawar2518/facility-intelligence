@@ -65,4 +65,4 @@ LOGGING = {
 # ============================================================
 # EMAIL — print to console in development (no real emails)
 # ============================================================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

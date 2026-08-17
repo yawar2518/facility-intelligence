@@ -4,7 +4,9 @@ Hierarchy API ViewSets.
 Each ViewSet handles CRUD for one model.
 Uses different serializers for list vs detail actions.
 """
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from apps.core.permissions import get_user_profile
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,26 +19,65 @@ from .serializers import (
     DeviceListSerializer, DeviceDetailSerializer,
 )
 
+class CurrentUserView(APIView):
+    """
+    GET /api/v1/auth/me/
+    Returns the current user's profile and accessible facilities.
+    Used by the frontend to adapt UI based on role.
+    """
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        user = request.user
+        profile = get_user_profile(user)
+
+        if not profile:
+            return Response({
+                'username': user.username,
+                'email': user.email,
+                'role': 'ADMIN' if user.is_superuser else 'UNKNOWN',
+                'facilities': [],
+            })
+
+        facilities = [
+            {'id': str(f.id), 'name': f.name, 'code': f.code}
+            for f in profile.accessible_facilities
+        ]
+
+        return Response({
+            'username': user.username,
+            'email':    user.email,
+            'role':     profile.role,
+            'facilities': facilities,
+        })
+    
 class FacilityViewSet(viewsets.ModelViewSet):
     """
     CRUD endpoints for Facilities.
-
-    List:   GET  /api/v1/facilities/
-    Detail: GET  /api/v1/facilities/{id}/
-    Create: POST /api/v1/facilities/
-    Update: PUT  /api/v1/facilities/{id}/
-    Delete: DEL  /api/v1/facilities/{id}/
+    Non-admin users only see their assigned facilities.
     """
-    queryset = Facility.objects.all().order_by('name')
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active']
     search_fields = ['name', 'code', 'address']
     ordering_fields = ['name', 'created_at', 'total_capacity']
 
+    def get_queryset(self):
+        from apps.core.permissions import get_user_profile
+
+        qs = Facility.objects.all().order_by('name')
+        user = self.request.user
+
+        if user.is_superuser:
+            return qs
+
+        profile = get_user_profile(user)
+        if not profile or profile.is_admin:
+            return qs
+
+        return profile.accessible_facilities.order_by('name')
+
     def get_serializer_class(self):
-        """Use lightweight serializer for lists, full serializer for detail."""
         if self.action == 'list':
             return FacilityListSerializer
         return FacilityDetailSerializer
