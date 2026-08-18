@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useAnomalies from '../hooks/useAnomalies'
 import AnomalyFeed from '../components/AnomalyFeed'
+import CsvExportButton from '../components/CsvExportButton';
 
 const SEVERITY_OPTIONS = ['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 const TYPE_OPTIONS = [
@@ -97,6 +98,8 @@ export default function AnomaliesPage() {
           {loading ? '—' : `${anomalies.length} anomalies`}
         </span>
       </div>
+
+      <CsvExportButton endpoint="ml/anomalies/" filename="anomalies.csv" />
 
       {/* Feed */}
       <div style={{

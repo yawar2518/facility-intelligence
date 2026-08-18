@@ -6,7 +6,9 @@ import DashboardPage from './pages/DashboardPage'
 import StatusGridPage from './pages/StatusGridPage'
 import TimelinePage from './pages/TimelinePage'
 import AnomaliesPage from './pages/AnomaliesPage'
-
+import AlertLogsPage from './pages/AlertLogsPage';
+import MaintenancePage from './pages/MaintenancePage';
+import SLADashboardPage from './pages/SLADashboardPage';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem('access_token')
@@ -26,6 +28,9 @@ function App() {
         <Route path="status" element={<StatusGridPage />} />
         <Route path="timeline" element={<TimelinePage />} />
         <Route path="/anomalies" element={<AnomaliesPage />} />
+        <Route path="/alert-logs" element={<AlertLogsPage />} />
+        <Route path="/maintenance" element={<MaintenancePage />} />
+        <Route path="/sla" element={<SLADashboardPage />} />
       </Route>
     </Routes>
   )
