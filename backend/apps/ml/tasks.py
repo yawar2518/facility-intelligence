@@ -608,3 +608,109 @@ def train_and_forecast():
         f"{forecasts_saved} forecasts saved"
     )
     return f"{lanes_processed} lanes forecasted"
+
+
+@shared_task(name='compute_maintenance_scores')
+def compute_maintenance_scores():
+    """
+    Runs daily at 3:00 AM.
+    Scores each active barrier gate device for maintenance risk
+    based on cycle count growth rate and error frequency
+    from the last 7 days of heartbeat data.
+    """
+    import json
+    import numpy as np
+    from apps.hierarchy.models import Device
+    from apps.monitoring.models import MaintenanceScore
+    from apps.ingestion.models import Heartbeat
+
+    from django.utils import timezone as django_timezone
+    import datetime
+
+    now = django_timezone.now()
+    since = now - datetime.timedelta(days=7)
+
+    # Only barrier gates have cycle counts — they wear out mechanically
+    devices = Device.objects.filter(
+        is_active=True,
+        device_type='BARRIER_GATE',
+    )
+
+    logger.info(f"[maintenance] Scoring {devices.count()} barrier gate devices")
+
+    scored = 0
+    for device in devices:
+        heartbeats = Heartbeat.objects.filter(
+            device=device,
+            timestamp__gte=since,
+        ).order_by('timestamp')
+
+        if heartbeats.count() < 10:
+            # Not enough data to score
+            continue
+
+        cycle_counts  = []
+        error_counts  = []
+
+        for hb in heartbeats:
+            metrics     = hb.metrics if isinstance(hb.metrics, dict) else {}
+            error_codes = hb.error_codes if isinstance(hb.error_codes, list) else []
+
+            cycle_counts.append(metrics.get('cycle_count', 0))
+            error_counts.append(len(error_codes))
+
+        cycle_counts = np.array(cycle_counts, dtype=float)
+        error_counts = np.array(error_counts, dtype=float)
+
+        # Feature 1: cycle count growth rate (cycles per heartbeat interval)
+        if len(cycle_counts) > 1 and cycle_counts[-1] > cycle_counts[0]:
+            cycle_rate = (cycle_counts[-1] - cycle_counts[0]) / len(cycle_counts)
+        else:
+            cycle_rate = 0.0
+
+        # Feature 2: error frequency (fraction of heartbeats with errors)
+        error_rate = error_counts.mean()
+
+        # Feature 3: total cycle count (absolute wear)
+        total_cycles = cycle_counts[-1] if len(cycle_counts) else 0
+
+        # Normalize and combine into a risk score (0.0 – 1.0)
+        # Thresholds based on realistic barrier gate specs:
+        # - cycle_rate > 5 per heartbeat = high activity
+        # - error_rate > 0.1 = 10% heartbeats have errors
+        # - total_cycles > 10000 = high wear
+        cycle_rate_score  = min(cycle_rate / 5.0,       1.0)
+        error_rate_score  = min(error_rate / 0.1,       1.0)
+        total_cycle_score = min(total_cycles / 10000.0, 1.0)
+
+        # Weighted combination
+        risk_score = (
+            0.4 * cycle_rate_score +
+            0.4 * error_rate_score +
+            0.2 * total_cycle_score
+        )
+
+        # Map to risk level
+        if risk_score >= 0.7:
+            risk_level = 'HIGH'
+        elif risk_score >= 0.4:
+            risk_level = 'MEDIUM'
+        else:
+            risk_level = 'LOW'
+
+        # Build explanation
+        explanation = (
+            f"Last 7 days: {int(total_cycles)} total cycles, "
+            f"{cycle_rate:.2f} cycles/heartbeat growth rate, "
+            f"{error_rate * 100:.1f}% heartbeats with errors."
+        )
+
+        MaintenanceScore.objects.create(
+            device=device,
+            risk_score=round(risk_score, 4),
+            risk_level=risk_level,
+            explanation=explanation,
+        )
+        scored += 1
+
+    logger.info(f"[maintenance] Scored {scored} devices")

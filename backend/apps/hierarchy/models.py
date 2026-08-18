@@ -10,6 +10,7 @@ references this hierarchy.
 
 import uuid
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class TimeStampedModel(models.Model):
@@ -295,3 +296,46 @@ class Device(TimeStampedModel):
             f"/lane/{self.lane.code}"
             f"/device/{self.code}"
         )
+
+class UserProfile(models.Model):
+    """
+    Extends Django's User with a role and facility assignments.
+    One profile per user — created automatically on user creation.
+    """
+
+    class Role(models.TextChoices):
+        ADMIN            = 'ADMIN',            'Admin'
+        REGIONAL_MANAGER = 'REGIONAL_MANAGER', 'Regional Manager'
+        FACILITY_OWNER   = 'FACILITY_OWNER',   'Facility Owner'
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile',
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=Role.choices,
+        default=Role.FACILITY_OWNER,
+    )
+    # Facilities this user can access
+    facilities = models.ManyToManyField(
+        Facility,
+        blank=True,
+        related_name='user_profiles',
+        help_text="Facilities this user has access to. Ignored for Admin role."
+    )
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
+
+    @property
+    def is_admin(self):
+        return self.role == self.Role.ADMIN
+
+    @property
+    def accessible_facilities(self):
+        """Returns queryset of facilities this user can access."""
+        if self.is_admin:
+            return Facility.objects.filter(is_active=True)
+        return self.facilities.filter(is_active=True)

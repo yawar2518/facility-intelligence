@@ -7,28 +7,46 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from django_filters.rest_framework import DjangoFilterBackend
-
 from .models import Anomaly, Forecast
 from .serializers import AnomalySerializer, ForecastSerializer
+from apps.core.renderers import CSVRenderer
 
 logger = logging.getLogger(__name__)
 
 
 class AnomalyViewSet(viewsets.ReadOnlyModelViewSet):
+    facility_field = 'facility'
     """
     Read-only endpoints for detected anomalies.
     Supports filtering by facility, severity, type, and acknowledgement.
+    Add ?format=csv to download as CSV.
 
     List:   GET /api/v1/ml/anomalies/
     Detail: GET /api/v1/ml/anomalies/{id}/
     """
-    queryset = Anomaly.objects.select_related(
-        'facility', 'lane'
-    ).order_by('-detected_at')
+    def get_queryset(self):
+        from apps.core.permissions import get_user_profile
+
+        qs = Anomaly.objects.select_related(
+            'facility', 'lane'
+        ).order_by('-detected_at')
+
+        user = self.request.user
+        if user.is_superuser:
+            return qs
+
+        profile = get_user_profile(user)
+        if not profile or profile.is_admin:
+            return qs
+
+        accessible = profile.accessible_facilities
+        return qs.filter(facility__in=accessible)
 
     serializer_class   = AnomalySerializer
     permission_classes = [IsAuthenticated]
+    renderer_classes   = [JSONRenderer, BrowsableAPIRenderer, CSVRenderer]
     filter_backends    = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields   = [
         'facility', 'anomaly_type', 'severity', 'is_acknowledged'
@@ -58,30 +76,40 @@ class AnomalyViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ForecastViewSet(viewsets.ReadOnlyModelViewSet):
+    facility_field = 'facility'
+    # rest of the class unchanged
     """
     Read-only endpoints for Prophet lane forecasts.
+    Add ?format=csv to download as CSV.
 
     List:   GET /api/v1/ml/forecasts/
     Detail: GET /api/v1/ml/forecasts/{id}/
-
-    Filter by lane: /api/v1/ml/forecasts/?lane={lane_id}
-    Filter by facility: /api/v1/ml/forecasts/?facility={facility_id}
     """
     serializer_class   = ForecastSerializer
     permission_classes = [IsAuthenticated]
+    renderer_classes   = [JSONRenderer, BrowsableAPIRenderer, CSVRenderer]
     filter_backends    = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields   = ['facility', 'lane']
     ordering_fields    = ['forecast_for', 'predicted']
     ordering           = ['forecast_for']
 
     def get_queryset(self):
-        """
-        Only return future forecasts by default.
-        This keeps the response small and relevant.
-        """
+        from apps.core.permissions import get_user_profile
         from django.utils import timezone
-        return Forecast.objects.select_related(
+
+        qs = Forecast.objects.select_related(
             'facility', 'lane'
         ).filter(
             forecast_for__gte=timezone.now()
         ).order_by('lane', 'forecast_for')
+
+        user = self.request.user
+        if user.is_superuser:
+            return qs
+
+        profile = get_user_profile(user)
+        if not profile or profile.is_admin:
+            return qs
+
+        accessible = profile.accessible_facilities
+        return qs.filter(facility__in=accessible)
