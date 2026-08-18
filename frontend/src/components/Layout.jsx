@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Grid2x2, Activity, LogOut, Eye,
-  AlertTriangle, Bell, Wrench, Trophy, User,
+  AlertTriangle, Bell, Wrench, Trophy, User, History,
 } from 'lucide-react'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/alert-logs',  label: 'Alert Logs',    icon: Bell },
   { to: '/maintenance', label: 'Maintenance',   icon: Wrench },
   { to: '/sla',         label: 'SLA Dashboard', icon: Trophy },
+  { to: '/playback',    label: 'Playback', icon: History },
 ]
 
 const ROLE_LABELS = {

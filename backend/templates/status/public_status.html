@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Auto-refresh every 60 seconds — no JS needed -->
+  <meta http-equiv="refresh" content="60" />
+  <title>Argus — Parking Status</title>
+  <style>
+    /* ── Design tokens — matches the React dashboard ── */
+    :root {
+      --bg:        #000000;
+      --surface:   #0A0A0A;
+      --surface-2: #111111;
+      --border:    #1A1A1A;
+      --border-2:  #262626;
+      --text-1:    #EDEDED;
+      --text-2:    #707070;
+      --text-3:    #3A3A3A;
+      --online:    #16A34A;
+      --offline:   #B91C1C;
+      --degraded:  #B45309;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .last-updated {
+      font-size: 12px;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Global banner ── */
+    .global-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      border: 1px solid;
+      margin-bottom: 32px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .global-banner.operational {
+      border-color: var(--online);
+      background: rgba(22, 163, 74, 0.06);
+      color: var(--online);
+    }
+    .global-banner.limited {
+      border-color: var(--degraded);
+      background: rgba(180, 83, 9, 0.06);
+      color: var(--degraded);
+    }
+    .global-banner.disrupted {
+      border-color: var(--offline);
+      background: rgba(185, 28, 28, 0.06);
+      color: var(--offline);
+    }
+    .banner-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ── Facility cards ── */
+    .facility-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .facility-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .facility-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .facility-meta {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .status-pill.operational {
+      color: var(--online);
+      border-color: var(--online);
+      background: rgba(22, 163, 74, 0.08);
+    }
+    .status-pill.limited {
+      color: var(--degraded);
+      border-color: var(--degraded);
+      background: rgba(180, 83, 9, 0.08);
+    }
+    .status-pill.disrupted {
+      color: var(--offline);
+      border-color: var(--offline);
+      background: rgba(185, 28, 28, 0.08);
+    }
+
+    /* ── Customer notices (anomaly alerts) ── */
+    .notices { padding: 10px 20px; border-bottom: 1px solid var(--border); }
+    .notice {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: var(--degraded);
+    }
+    .notice.disruption { color: var(--offline); }
+    .notice-icon { font-size: 13px; flex-shrink: 0; }
+
+    /* ── Area rows ── */
+    .areas { padding: 8px 0; }
+    .area-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .area-row:last-child { border-bottom: none; }
+    .area-name {
+      font-size: 13px;
+      color: var(--text-1);
+      font-weight: 500;
+    }
+    .area-capacity {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+    .area-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .area-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .area-dot.available  { background: var(--online); }
+    .area-dot.limited    { background: var(--degraded); }
+    .area-dot.unavailable { background: var(--offline); }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+    .footer a { color: var(--text-2); text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">👁</div>
+      <div>
+        <div class="logo-name">Argus Parking</div>
+        <div style="font-size:11px; color:var(--text-2);">Real-time facility status</div>
+      </div>
+    </div>
+    <div class="last-updated">
+      Updated {{ updated_at }} · Refreshes every 60s
+    </div>
+  </div>
+
+  <!-- Global banner -->
+  <div class="global-banner {{ global_status }}">
+    <div class="banner-dot"></div>
+    {% if global_status == 'operational' %}
+      All Facilities Operational
+    {% elif global_status == 'limited' %}
+      Some Facilities Experiencing High Demand
+    {% else %}
+      Service Disruption at One or More Facilities
+    {% endif %}
+  </div>
+
+  <!-- Facility cards -->
+  {% for facility in facilities %}
+  <div class="facility-card">
+
+    <!-- Facility header -->
+    <div class="facility-header">
+      <div>
+        <div class="facility-name">{{ facility.name }}</div>
+        <div class="facility-meta">
+          {{ facility.address|default:"—" }} &nbsp;·&nbsp;
+          Total capacity: {{ facility.total_capacity }} vehicles
+        </div>
+      </div>
+      <div class="status-pill {{ facility.status }}">
+        {% if facility.status == 'operational' %}Operational
+        {% elif facility.status == 'limited' %}Limited Availability
+        {% else %}Disrupted{% endif %}
+      </div>
+    </div>
+
+    <!-- Customer notices -->
+    {% if facility.notices %}
+    <div class="notices">
+      {% for notice in facility.notices %}
+      <div class="notice {% if notice.level == 'disruption' %}disruption{% endif %}">
+        <span class="notice-icon">
+          {% if notice.level == 'disruption' %}⚠{% else %}ℹ{% endif %}
+        </span>
+        {{ notice.message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Area rows -->
+    <div class="areas">
+      {% for area in facility.areas %}
+      <div class="area-row">
+        <div>
+          <div class="area-name">{{ area.name }}</div>
+          <div class="area-capacity">Capacity: {{ area.capacity }} vehicles</div>
+        </div>
+        <div class="area-status">
+          <div class="area-dot {{ area.availability }}"></div>
+          <span style="color:
+            {% if area.availability == 'available' %}var(--online)
+            {% elif area.availability == 'limited' %}var(--degraded)
+            {% else %}var(--offline){% endif %}">
+            {% if area.availability == 'available' %}Available
+            {% elif area.availability == 'limited' %}Limited
+            {% else %}Unavailable{% endif %}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+  {% endfor %}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Powered by Argus Facility Intelligence &nbsp;·&nbsp;
+    <a href="/status/">Refresh now</a></p>
+  </div>
+
+</div>
+</body>
+</html>

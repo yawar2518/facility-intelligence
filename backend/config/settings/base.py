@@ -138,6 +138,19 @@ CHANNEL_LAYERS = {
 }
 
 # ============================================================
+# CACHE (Redis)
+# ============================================================
+# Used by cache_page on the public status view.
+# Redis is already running for Celery and Channels —
+# we use database 2 to keep cache separate from both.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': env('REDIS_URL', default='redis://localhost:6379/2'),
+    }
+}
+
+# ============================================================
 # CELERY (Background Jobs)
 # ============================================================
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')

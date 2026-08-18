@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AreaHealthView, DeviceUptimeView, FacilityHealthSummaryView,
     FacilityDeviceTreeView, FacilityStatusChangesView,
-    MaintenanceScoreViewSet,FacilitySLAView
+    MaintenanceScoreViewSet, FacilitySLAView, FacilityPlaybackView
 )
 
 router = DefaultRouter()
@@ -40,6 +40,12 @@ urlpatterns = [
         'areas/<uuid:area_id>/health/',
         AreaHealthView.as_view(),
         name='area-health'
+    ),
+
+    path(
+        'facilities/<uuid:facility_id>/playback/',
+        FacilityPlaybackView.as_view(),
+        name='facility-playback'
     ),
 
 ]

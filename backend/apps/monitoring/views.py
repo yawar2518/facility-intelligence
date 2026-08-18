@@ -286,3 +286,146 @@ class MaintenanceScoreViewSet(viewsets.ReadOnlyModelViewSet):
 
         accessible = profile.accessible_facilities
         return qs.filter(device__lane__area__facility__in=accessible)
+
+class FacilityPlaybackView(APIView):
+    """
+    Returns a unified snapshot of everything that happened inside
+    a facility during a given time window — traffic, device status
+    changes, and anomalies — all on the same timeline.
+
+    GET /api/v1/monitoring/facilities/{id}/playback/
+        ?start=2026-08-17T14:00:00Z
+        &end=2026-08-17T16:00:00Z
+        &bucket_minutes=5   (optional, default 5)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, facility_id):
+        # ── Access control ─────────────────────────────────────
+        if not check_facility_access(request.user, facility_id):
+            return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            facility = Facility.objects.get(pk=facility_id, is_active=True)
+        except Facility.DoesNotExist:
+            return Response({'error': 'Facility not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # ── Parse time window params ────────────────────────────
+        now = django_timezone.now()
+        default_start = now - timedelta(hours=24)
+
+        try:
+            start_str = request.query_params.get('start')
+            end_str   = request.query_params.get('end')
+            from django.utils.dateparse import parse_datetime
+            window_start = parse_datetime(start_str) if start_str else default_start
+            window_end   = parse_datetime(end_str)   if end_str   else now
+            # Fallback if parsing returned None (bad format)
+            if not window_start:
+                window_start = default_start
+            if not window_end:
+                window_end = now
+        except Exception:
+            window_start = default_start
+            window_end   = now
+
+        # Clamp bucket size: min 1 minute, max 60 minutes
+        try:
+            bucket_minutes = int(request.query_params.get('bucket_minutes', 5))
+            bucket_minutes = max(1, min(bucket_minutes, 60))
+        except ValueError:
+            bucket_minutes = 5
+
+        # ── Query 1: Traffic buckets via TimescaleDB ────────────
+        # time_bucket() groups raw vehicle events into N-minute
+        # buckets. This is fast even over months of data because
+        # ingestion_vehicle_events is a TimescaleDB hypertable.
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    time_bucket(%s::interval, timestamp) AS bucket,
+                    COUNT(*)                             AS event_count
+                FROM ingestion_vehicle_events
+                WHERE facility_id = %s
+                  AND timestamp >= %s
+                  AND timestamp <= %s
+                GROUP BY bucket
+                ORDER BY bucket ASC
+            """, [
+                f'{bucket_minutes} minutes',
+                str(facility.id),
+                window_start,
+                window_end,
+            ])
+            rows = cursor.fetchall()
+
+        traffic_buckets = [
+            {
+                'bucket': row[0].isoformat() if hasattr(row[0], 'isoformat') else str(row[0]),
+                'event_count': row[1],
+            }
+            for row in rows
+        ]
+
+        # ── Query 2: Device status changes in the window ────────
+        changes_qs = (
+            DeviceStatusChange.objects
+            .filter(facility=facility, changed_at__gte=window_start, changed_at__lte=window_end)
+            .select_related('device', 'lane', 'area')
+            .order_by('changed_at')
+        )
+        status_changes = [
+            {
+                'id':              str(c.id),
+                'changed_at':      c.changed_at.isoformat(),
+                'device_code':     c.device.code,
+                'device_name':     c.device.name,
+                'device_type':     c.device.device_type,
+                'area_name':       c.area.name,
+                'lane_name':       c.lane.name,
+                'previous_status': c.previous_status,
+                'new_status':      c.new_status,
+                'reason':          c.reason,
+                'duration_seconds': c.duration_seconds,
+            }
+            for c in changes_qs
+        ]
+
+        # ── Query 3: Anomalies detected in the window ───────────
+        anomalies_qs = (
+            Anomaly.objects
+            .filter(
+                lane__area__facility=facility,
+                detected_at__gte=window_start,
+                detected_at__lte=window_end,
+            )
+            .select_related('lane__area')
+            .order_by('detected_at')
+        )
+        anomalies = [
+            {
+                'id':           str(a.id),
+                'detected_at':  a.detected_at.isoformat(),
+                'anomaly_type': a.anomaly_type,
+                'severity':     a.severity,
+                'sigma_score':  a.sigma_score,
+                'explanation':  a.explanation,
+                'lane_name':    a.lane.name,
+                'area_name':    a.lane.area.name,
+            }
+            for a in anomalies_qs
+        ]
+
+        # ── Return unified response ─────────────────────────────
+        return Response({
+            'facility_id':    str(facility.id),
+            'facility_code':  facility.code,
+            'facility_name':  facility.name,
+            'window_start':   window_start.isoformat(),
+            'window_end':     window_end.isoformat(),
+            'bucket_minutes': bucket_minutes,
+            'traffic_buckets':  traffic_buckets,
+            'status_changes':   status_changes,
+            'anomalies':        anomalies,
+        })
