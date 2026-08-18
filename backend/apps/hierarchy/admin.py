@@ -1,6 +1,23 @@
 from django.contrib import admin
 from .models import Facility, Area, Lane, Device
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import UserProfile
 
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    extra = 0
+    fields = ['role', 'facilities']
+    filter_horizontal = ['facilities']
+
+
+class UserAdmin(BaseUserAdmin):
+    inlines = [UserProfileInline]
+
+
+# Re-register User with our custom admin
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 class AreaInline(admin.TabularInline):
     """

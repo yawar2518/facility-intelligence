@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/v1/', include('apps.hierarchy.urls')),
     path('api/v1/monitoring/', include('apps.monitoring.urls')),
     path('api/v1/ml/', include('apps.ml.urls')),
+    path('api/v1/', include('apps.alerts.urls')),
 ]
 
 if settings.DEBUG:
