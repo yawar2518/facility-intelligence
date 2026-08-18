@@ -33,3 +33,5 @@ django-guardian==2.4.0
 # Utilities
 Pillow==11.1.0
 python-decouple==3.8
+
+requests==2.32.3

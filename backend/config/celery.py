@@ -56,5 +56,20 @@ app.conf.beat_schedule = {
     # so they don't compete for CPU simultaneously
 },
 
+'evaluate-alert-rules': {
+    'task': 'evaluate_alert_rules',
+    'schedule': crontab(minute=15, hour='*'),
+},
+
+'send-daily-digest': {
+    'task': 'send_daily_digest',
+    'schedule': crontab(hour=8, minute=0),
+},
+
+'compute-maintenance-scores': {
+    'task': 'compute_maintenance_scores',
+    'schedule': crontab(hour=3, minute=0),
+},
+
 }
 

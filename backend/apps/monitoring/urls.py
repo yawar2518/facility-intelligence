@@ -1,10 +1,21 @@
-from django.urls import path
-from .views import AreaHealthView, DeviceUptimeView, FacilityHealthSummaryView
-from .views import DeviceUptimeView, FacilityHealthSummaryView, FacilityDeviceTreeView
-from .views import FacilityStatusChangesView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import (
+    AreaHealthView, DeviceUptimeView, FacilityHealthSummaryView,
+    FacilityDeviceTreeView, FacilityStatusChangesView,
+    MaintenanceScoreViewSet,FacilitySLAView
+)
 
+router = DefaultRouter()
+router.register(r'maintenance-scores', MaintenanceScoreViewSet, basename='maintenance-score')
 
 urlpatterns = [
+    path('', include(router.urls)),
+    path(
+    'facilities/sla/',
+    FacilitySLAView.as_view(),
+    name='facility-sla',
+    ),
     path(
         'devices/<uuid:device_id>/uptime/',
         DeviceUptimeView.as_view(),
@@ -16,18 +27,19 @@ urlpatterns = [
         name='facility-health'
     ),
     path(
-    'facilities/<uuid:facility_id>/devices/',
-    FacilityDeviceTreeView.as_view(),
-    name='facility-device-tree'
+        'facilities/<uuid:facility_id>/devices/',
+        FacilityDeviceTreeView.as_view(),
+        name='facility-device-tree'
     ),
     path(
-    'facilities/<uuid:facility_id>/status-changes/',
-    FacilityStatusChangesView.as_view(),
-    name='facility-status-changes'
+        'facilities/<uuid:facility_id>/status-changes/',
+        FacilityStatusChangesView.as_view(),
+        name='facility-status-changes'
     ),
     path(
-    'areas/<uuid:area_id>/health/',
-    AreaHealthView.as_view(),
-    name='area-health'
+        'areas/<uuid:area_id>/health/',
+        AreaHealthView.as_view(),
+        name='area-health'
     ),
+
 ]

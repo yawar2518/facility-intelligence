@@ -63,3 +63,49 @@ class HealthCheckRun(models.Model):
 
     class Meta:
         ordering = ['-started_at']
+
+
+class MaintenanceScore(models.Model):
+    """
+    Predictive maintenance risk score per device.
+    Computed daily by the maintenance scoring Celery task.
+    Higher risk_score = more likely to fail soon.
+    """
+
+    class RiskLevel(models.TextChoices):
+        LOW    = 'LOW',    'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH   = 'HIGH',   'High'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    device = models.ForeignKey(
+        Device,
+        on_delete=models.CASCADE,
+        related_name='maintenance_scores',
+    )
+
+    risk_score = models.FloatField(
+        help_text="Anomaly score 0.0–1.0 — higher means more likely to fail"
+    )
+
+    risk_level = models.CharField(
+        max_length=10,
+        choices=RiskLevel.choices,
+        default=RiskLevel.LOW,
+    )
+
+    explanation = models.TextField(
+        help_text="Human-readable reason for this risk score"
+    )
+
+    computed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-computed_at', '-risk_score']
+        indexes = [
+            models.Index(fields=['device', 'computed_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.device.name} — {self.risk_level} ({self.risk_score:.2f})"
