@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.monitoring.status_views import PublicStatusView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -19,6 +20,7 @@ urlpatterns = [
     path('api/v1/monitoring/', include('apps.monitoring.urls')),
     path('api/v1/ml/', include('apps.ml.urls')),
     path('api/v1/', include('apps.alerts.urls')),
+    path('status/', PublicStatusView.as_view(), name='public-status'),
 ]
 
 if settings.DEBUG:
