@@ -81,11 +81,10 @@ class UptimeCalculationTest(TestCase):
         return 100% uptime — no offline time recorded.
         """
         result = calculate_uptime(self.device, days=1)
-        # No DeviceStatusChange records → no offline time counted
-        self.assertEqual(result['uptime_pct'], 0.0)
-        # Note: 0% because calculate_uptime only counts duration FROM
-        # status change records. With no records there is nothing to sum.
-        # This is documented behaviour — the device is new/untracked.
+        # No DeviceStatusChange records means the device has been in its
+        # current status (ONLINE, per _make_hierarchy) for the entire
+        # window — that should count as 100% uptime, not 0%.
+        self.assertEqual(result['uptime_pct'], 100.0)
 
     def test_device_offline_half_the_window(self):
         """

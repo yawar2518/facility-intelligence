@@ -52,3 +52,8 @@ export async function getLaneForecast(laneId) {
   const response = await client.get(`/ml/forecasts/?lane=${laneId}`)
   return response.data
 }
+
+export async function getLaneHistory(laneId, hours = 12) {
+  const response = await client.get(`/ml/forecasts/history/?lane=${laneId}&hours=${hours}`)
+  return response.data
+}

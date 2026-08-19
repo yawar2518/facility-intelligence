@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#f2ece2;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#211d17}
+  a{text-decoration:none;color:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(33,29,23,.16);border-radius:5px}
+  @keyframes pulseG{0%{box-shadow:0 0 0 0 rgba(31,158,122,.45)}70%{box-shadow:0 0 0 6px rgba(31,158,122,0)}100%{box-shadow:0 0 0 0 rgba(31,158,122,0)}}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden">
+
+  <aside style="width:216px;flex:none;background:#ebe3d5;border-right:1px solid rgba(33,29,23,.12);display:flex;flex-direction:column">
+    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <div style="font-family:Archivo,sans-serif;font-weight:900;font-size:24px;letter-spacing:-.02em">Argus</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.24em;color:#9a9081;margin-top:5px">PARKING&nbsp;INTELLIGENCE</div>
+    </div>
+    <div style="padding:11px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <span style="width:7px;height:7px;border-radius:50%;background:#1f9e7a;animation:pulseG 2.6s infinite;flex:none"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#6b6357">LIVE&nbsp;·&nbsp;WEBSOCKET</span>
+    </div>
+    <nav style="flex:1;padding:16px 14px;overflow:auto">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:0 8px 8px">MONITOR</div>
+      <a href="Overview.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Overview</span></a>
+      <a href="Status-Grid.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">Status Grid</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#cc3b30">2↓</span></a>
+      <a href="Timeline.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Timeline</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">DETECT</div>
+      <a href="Anomalies.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Anomalies</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(204,59,48,.14);color:#cc3b30;padding:1px 6px;border-radius:8px">5</span></a>
+      <a href="Alert-Logs.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;background:#211d17;margin-bottom:3px"><span style="font-size:12.5px;white-space:nowrap;color:#f2ece2;font-weight:500">Alert Logs</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">PREDICT</div>
+      <a href="Maintenance.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Maintenance</span></a>
+      <a href="SLA-Dashboard.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">SLA Dashboard</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">REPLAY</div>
+      <a href="Playback.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Playback</span></a>
+    </nav>
+    <a href="Public-Status.dc.html" style="margin:0 14px 6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed rgba(33,29,23,.2);border-radius:7px" style-hover="background:rgba(33,29,23,.05)"><span style="width:6px;height:6px;border-radius:50%;background:#1f9e7a;flex:none"></span><span style="font-size:11px;color:#6b6357">Public status page</span><span style="margin-left:auto;font-size:11px;color:#a89e8d">↗</span></a>
+    <div style="padding:14px 18px;border-top:1px solid rgba(33,29,23,.1);display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:7px;background:#211d17;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:800;font-size:12px;color:#f2ece2;flex:none">A</div>
+      <div><div style="font-size:11.5px;font-weight:500">A. Rehman</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9a9081">Admin · all sites</div></div>
+    </div>
+  </aside>
+
+  <main style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 34px;border-bottom:1px solid rgba(33,29,23,.1);flex:none">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:#9a9081">ALERT LOGS <span style="color:#c9bfae">/</span> DELIVERY</div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6357">15:24:07 PKT</span>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:32px 34px 48px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <h1 style="font-family:Archivo,sans-serif;font-weight:800;font-size:34px;margin:0 0 6px;letter-spacing:-.02em">Alert Delivery Log</h1>
+          <p style="font-size:13px;color:#6b6357;margin:0">Every alert dispatched by the rules engine — email, Slack, and SMS.</p>
+        </div>
+        <div style="display:flex;gap:22px;text-align:right">
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:30px;line-height:1;color:#1f9e7a">40</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">SENT · 24H</div></div>
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:30px;line-height:1;color:#cc3b30">2</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">FAILED · 24H</div></div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;letter-spacing:.1em;margin-right:4px">STATUS</span>
+        <button style="padding:5px 13px;border-radius:7px;border:1px solid rgba(33,29,23,.16);background:#211d17;color:#f2ece2;font-size:12px;cursor:pointer">All</button>
+        <button style="padding:5px 13px;border-radius:7px;border:1px solid rgba(33,29,23,.16);background:transparent;color:#6b6357;font-size:12px;cursor:pointer" style-hover="background:rgba(33,29,23,.06)">Sent</button>
+        <button style="padding:5px 13px;border-radius:7px;border:1px solid rgba(33,29,23,.16);background:transparent;color:#6b6357;font-size:12px;cursor:pointer" style-hover="background:rgba(33,29,23,.06)">Failed</button>
+        <button style="margin-left:auto;display:flex;align-items:center;gap:6px;background:#fbf8f2;border:1px solid rgba(33,29,23,.16);border-radius:7px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#211d17;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">↓ Export CSV</button>
+      </div>
+
+      <div style="background:#fbf8f2;border:1px solid rgba(33,29,23,.12);border-radius:12px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:12px 22px;border-bottom:1px solid rgba(33,29,23,.12);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:#a89e8d"><span>RULE</span><span>RECIPIENT</span><span>TYPE</span><span>SEVERITY</span><span>STATUS</span><span style="text-align:right">SENT AT</span></div>
+
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">Critical alerts — Ops</span><span style="font-size:12px;color:#6b6357">ops@parkco.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">ANY</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cc3b30">CRITICAL</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">15:22:44</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">High severity — Regional</span><span style="font-size:12px;color:#6b6357">r.khan@parkco.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">TRAFFIC_DROP</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12">HIGH</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">15:22:44</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">SMS — on-call engineer</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6357">+92 3•• ••• 41</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">ANY</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cc3b30">CRITICAL</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#cc3b30">✕ FAILED</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">11:41:03</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">Device flapping — Network</span><span style="font-size:12px;color:#6b6357">network@airpark.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">DEVICE_FLAPPING</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12">HIGH</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">11:10:52</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">Kiosk errors — Slack</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6357">#ops-mall</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">ERROR_RATE</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a07d3a">MEDIUM</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">14:05:19</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">High severity — Regional</span><span style="font-size:12px;color:#6b6357">r.khan@parkco.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">TRAFFIC_SPIKE</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12">HIGH</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#cc3b30">✕ FAILED</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">09:30:31</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;border-bottom:1px solid rgba(33,29,23,.08);align-items:center"><span style="font-size:12.5px;font-weight:500">Owner daily digest</span><span style="font-size:12px;color:#6b6357">owner@parkco.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">ANY</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8a8172">LOW</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">08:00:00</span></div>
+        <div style="display:grid;grid-template-columns:minmax(170px,1fr) 200px 148px 92px 104px 116px;gap:16px;padding:14px 22px;align-items:center"><span style="font-size:12.5px;font-weight:500">Critical alerts — Ops</span><span style="font-size:12px;color:#6b6357">ops@parkco.pk</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#6b6357">ANY</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cc3b30">CRITICAL</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1f9e7a">✓ SENT</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a89e8d;text-align:right">02:14:07</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

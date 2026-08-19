@@ -1,5 +1,5 @@
 import { useDeviceDetail } from '../../hooks/useDeviceDetail'
-import { X } from 'lucide-react'
+import ForecastChart from '../ForecastChart'
 
 function DeviceDetailPanel({ device, onClose }) {
   const { uptime, loading } = useDeviceDetail(device?.id)
@@ -13,6 +13,7 @@ function DeviceDetailPanel({ device, onClose }) {
   }
 
   const color = statusColor[device?.status] || statusColor.UNKNOWN
+  const isDegraded = device?.status === 'DEGRADED'
 
   const formatLastSeen = (iso) => {
     if (!iso) return 'Never'
@@ -30,7 +31,7 @@ function DeviceDetailPanel({ device, onClose }) {
     if (d === 0 && h === 0) return `${m}m`
     if (d === 0 && m === 0) return `${h}h`
     if (d === 0) return `${h}h ${m}m`
-    if (h === 0 && m === 0) return `${d}d`
+    if (d === 0 && m === 0) return `${d}d`
     if (m === 0) return `${d}d ${h}h`
     return `${d}d ${h}h ${m}m`
   }
@@ -43,26 +44,26 @@ function DeviceDetailPanel({ device, onClose }) {
       <div
         onClick={onClose}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 40,
+          background: 'rgba(33, 29, 23, 0.28)',
+          animation: 'backdropIn 0.32s ease-out both',
         }}
       />
 
       {/* Panel */}
       <div style={{
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         right: 0,
         height: '100%',
-        width: '360px',
-        background: 'var(--surface)',
-        borderLeft: '1px solid var(--border)',
-        zIndex: 50,
-        overflowY: 'auto',
+        width: '372px',
+        background: '#f7f2e9',
+        borderLeft: '1px solid rgba(33, 29, 23, 0.14)',
+        boxShadow: '-16px 0 40px rgba(33, 29, 23, 0.12)',
         display: 'flex',
         flexDirection: 'column',
+        animation: 'drawerIn 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both',
       }}>
 
         {/* Header */}
@@ -70,65 +71,82 @@ function DeviceDetailPanel({ device, onClose }) {
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          padding: '20px',
-          borderBottom: '1px solid var(--border)',
+          padding: '22px',
+          borderBottom: '1px solid var(--border-2)',
         }}>
           <div>
-            <p style={{
+            <div style={{
               fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '16px',
+              fontSize: '17px',
               fontWeight: 500,
-              color: 'var(--text-1)',
-              marginBottom: '3px',
             }}>
               {device.code}
-            </p>
-            <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: 'var(--text-3)',
+              marginTop: '3px',
+            }}>
               {device.name}
-            </p>
+              {(device.area_name || device.lane_name) &&
+                ` · ${[device.area_name, device.lane_name].filter(Boolean).join(' / ')}`}
+            </div>
           </div>
-          <button
+          <div
             onClick={onClose}
             style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '2px',
+              fontSize: '16px',
               color: 'var(--text-3)',
-              display: 'flex',
-              alignItems: 'center',
+              cursor: 'pointer',
             }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-1)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-1)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-3)'}
           >
-            <X size={16} strokeWidth={1.5}/>
-          </button>
+            ✕
+          </div>
         </div>
 
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{
+          padding: '22px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          overflow: 'auto',
+        }}>
 
-          {/* Status */}
+          {/* Current Status */}
           <div>
-            <p style={{
-              fontSize: '10px',
-              fontWeight: 500,
+            <div style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '9px',
+              letterSpacing: '0.14em',
               color: 'var(--text-3)',
-              letterSpacing: '0.8px',
-              textTransform: 'uppercase',
-              marginBottom: '10px',
+              marginBottom: '11px',
             }}>
-              Current Status
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '6px',
-                  height: '6px',
+              CURRENT STATUS
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
                   background: color,
-                  flexShrink: 0,
+                  animation: isDegraded ? 'pulseA 2s infinite' : 'none',
                 }}/>
-                <span style={{ fontSize: '13px', fontWeight: 500, color }}>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: color,
+                }}>
                   {device.status}
                 </span>
               </div>
@@ -143,35 +161,41 @@ function DeviceDetailPanel({ device, onClose }) {
           </div>
 
           {/* Divider */}
-          <div style={{ height: '1px', background: 'var(--border)' }}/>
+          <div style={{ height: '1px', background: 'var(--border-2)' }}/>
 
-          {/* Device info */}
+          {/* Device Info */}
           <div>
-            <p style={{
-              fontSize: '10px',
-              fontWeight: 500,
+            <div style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '9px',
+              letterSpacing: '0.14em',
               color: 'var(--text-3)',
-              letterSpacing: '0.8px',
-              textTransform: 'uppercase',
-              marginBottom: '10px',
+              marginBottom: '12px',
             }}>
-              Device Info
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              DEVICE INFO
+            </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '9px',
+            }}>
               {[
                 { label: 'Type', value: device.device_type },
-                { label: 'Timeout', value: `${device.heartbeat_timeout_seconds}s` },
+                { label: 'Firmware', value: device.firmware_version || '—' },
+                { label: 'Heartbeat timeout', value: `${device.heartbeat_timeout_seconds}s` },
+                { label: 'Serial', value: device.serial_number || '—' },
               ].map(({ label, value }) => (
                 <div key={label} style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
                 }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>{label}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>
+                    {label}
+                  </span>
                   <span style={{
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '11px',
-                    color: 'var(--text-2)',
+                    color: 'var(--text-mid)',
                   }}>
                     {value}
                   </span>
@@ -181,7 +205,7 @@ function DeviceDetailPanel({ device, onClose }) {
           </div>
 
           {/* Divider */}
-          <div style={{ height: '1px', background: 'var(--border)' }}/>
+          <div style={{ height: '1px', background: 'var(--border-2)' }}/>
 
           {/* Uptime */}
           {loading && (
@@ -190,41 +214,42 @@ function DeviceDetailPanel({ device, onClose }) {
 
           {uptime && (
             <div>
-              <p style={{
-                fontSize: '10px',
-                fontWeight: 500,
+              <div style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '9px',
+                letterSpacing: '0.14em',
                 color: 'var(--text-3)',
-                letterSpacing: '0.8px',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
+                marginBottom: '12px',
               }}>
-                Uptime — Last 7 Days
-              </p>
+                UPTIME — LAST 7 DAYS
+              </div>
 
               {/* Big number */}
-              <p style={{
-                fontSize: '28px',
-                fontWeight: 600,
-                color: 'var(--text-1)',
+              <div style={{
+                fontFamily: 'Archivo, sans-serif',
+                fontWeight: 900,
+                fontSize: '38px',
                 lineHeight: 1,
-                marginBottom: '10px',
               }}>
                 {uptime.uptime_pct}
-                <span style={{ fontSize: '14px', color: 'var(--text-3)', marginLeft: '3px' }}>%</span>
-              </p>
+                <span style={{ fontSize: '18px', color: 'var(--text-3)' }}>%</span>
+              </div>
 
               {/* Progress bar */}
               <div style={{
-                height: '2px',
-                background: 'var(--border)',
-                borderRadius: '1px',
-                marginBottom: '16px',
+                height: '4px',
+                background: 'rgba(33, 29, 23, 0.1)',
+                borderRadius: '2px',
                 overflow: 'hidden',
+                margin: '12px 0 16px',
               }}>
                 <div style={{
                   height: '100%',
                   width: `${uptime.uptime_pct}%`,
                   background: 'var(--online)',
+                  borderRadius: '2px',
+                  transformOrigin: 'left',
+                  animation: 'barGrow 1s ease-out both',
                 }}/>
               </div>
 
@@ -236,29 +261,53 @@ function DeviceDetailPanel({ device, onClose }) {
               }}>
                 {[
                   { label: 'Online', value: formatDuration(uptime.online_seconds), color: 'var(--online)' },
-                  { label: 'Offline', value: formatDuration(uptime.offline_seconds), color: 'var(--offline)' },
+                  { label: 'Offline', value: formatDuration(uptime.offline_seconds), color: 'var(--critical)' },
                   { label: 'Degraded', value: formatDuration(uptime.degraded_seconds), color: 'var(--degraded)' },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '5px',
-                    padding: '8px',
+                    background: 'var(--surface-white)',
+                    border: '1px solid var(--border-2)',
+                    borderRadius: '7px',
+                    padding: '9px',
                     textAlign: 'center',
                   }}>
-                    <p style={{
+                    <div style={{
                       fontFamily: 'JetBrains Mono, monospace',
                       fontSize: '12px',
-                      fontWeight: 500,
+                      fontWeight: 600,
                       color,
-                      marginBottom: '3px',
                     }}>
                       {value}
-                    </p>
-                    <p style={{ fontSize: '10px', color: 'var(--text-3)' }}>{label}</p>
+                    </div>
+                    <div style={{
+                      fontSize: '9.5px',
+                      color: 'var(--text-3)',
+                      marginTop: '3px',
+                    }}>
+                      {label}
+                    </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          {device.lane_id && <div style={{ height: '1px', background: 'var(--border-2)' }}/>}
+
+          {/* Forecast */}
+          {device.lane_id && (
+            <div>
+              <div style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '9px',
+                letterSpacing: '0.14em',
+                color: 'var(--text-3)',
+                marginBottom: '12px',
+              }}>
+                TRAFFIC FORECAST
+              </div>
+              <ForecastChart laneId={device.lane_id} laneName={device.lane_name} />
             </div>
           )}
 

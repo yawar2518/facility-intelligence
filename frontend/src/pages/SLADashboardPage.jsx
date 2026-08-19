@@ -1,33 +1,73 @@
-import { Trophy, Activity, AlertTriangle, Zap } from 'lucide-react';
 import { useFacilitySLA } from '../hooks/useFacilitySLA';
+import { useCountUp } from '../hooks/useCountUp';
 
-function UptimeBar({ pct }) {
-  const color = pct >= 95 ? 'var(--online)' : pct >= 80 ? 'var(--degraded)' : 'var(--offline)';
+const GRID_COLUMNS = '64px minmax(180px,1fr) 170px 230px 100px 100px 90px';
+
+function uptimeColor(pct) {
+  return pct >= 95 ? 'var(--online)' : pct >= 80 ? 'var(--degraded)' : 'var(--offline)';
+}
+
+function UptimeBar({ pct, delay }) {
+  const color = uptimeColor(pct);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <div style={{ flex: 1, height: '6px', background: 'var(--border-2)', borderRadius: '3px' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+      <div style={{
+        flex: 1,
+        height: '6px',
+        background: 'var(--border-2)',
+        borderRadius: '3px',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          width: `${pct}%`,
+          background: color,
+          borderRadius: '3px',
+          transformOrigin: 'left',
+          animation: `barGrow 1s ease-out ${delay}s both`,
+        }} />
       </div>
-      <span style={{ color, fontSize: '12px', fontFamily: 'JetBrains Mono, monospace',
-                     minWidth: '48px', textAlign: 'right' }}>
-        {pct}%
+      <span style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '11.5px',
+        color,
+        flex: 'none',
+        minWidth: '42px',
+        textAlign: 'right',
+      }}>
+        {pct.toFixed(1)}%
       </span>
     </div>
   );
 }
 
-function MetricCard({ icon, label, value, color }) {
+function MetricCard({ label, value, suffix, color, delay }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)',
-                  borderRadius: '8px', padding: '16px', flex: 1 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                    marginBottom: '8px', color: 'var(--text-2)' }}>
-        {icon}
-        <span style={{ fontSize: '12px' }}>{label}</span>
+    <div className="slide-up" style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: '10px',
+      padding: '18px 20px',
+      flex: 1,
+      animationDelay: `${delay}s`,
+    }}>
+      <div style={{
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '9.5px',
+        letterSpacing: '0.14em',
+        color: 'var(--text-3)',
+        marginBottom: '10px',
+      }}>
+        {label}
       </div>
-      <div style={{ fontSize: '28px', fontWeight: 700, color: color ?? 'var(--text-1)',
-                    fontFamily: 'JetBrains Mono, monospace' }}>
-        {value}
+      <div style={{
+        fontFamily: 'Archivo, sans-serif',
+        fontWeight: 900,
+        fontSize: '34px',
+        lineHeight: 1,
+        color,
+      }}>
+        {value}{suffix && <span style={{ fontSize: '20px' }}>{suffix}</span>}
       </div>
     </div>
   );
@@ -36,111 +76,234 @@ function MetricCard({ icon, label, value, color }) {
 export default function SLADashboardPage() {
   const { facilities, loading, error } = useFacilitySLA();
 
-  const totalAnomalies  = facilities.reduce((s, f) => s + f.anomaly_count, 0);
-  const totalIncidents  = facilities.reduce((s, f) => s + f.incident_count, 0);
-  const totalCritical   = facilities.reduce((s, f) => s + f.critical_anomalies, 0);
-  const avgUptime       = facilities.length
-    ? (facilities.reduce((s, f) => s + f.uptime_pct, 0) / facilities.length).toFixed(1)
+  const totalAnomalies = facilities.reduce((s, f) => s + f.anomaly_count, 0);
+  const totalIncidents = facilities.reduce((s, f) => s + f.incident_count, 0);
+  const totalCritical  = facilities.reduce((s, f) => s + f.critical_anomalies, 0);
+  const avgUptime      = facilities.length
+    ? facilities.reduce((s, f) => s + f.uptime_pct, 0) / facilities.length
     : 0;
 
-  return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+  // Ranked by uptime (already sorted by the API), then by fewer anomalies —
+  // matches the "#1 / #2 / #3" leaderboard order in the design.
+  const ranked = [...facilities].sort((a, b) =>
+    b.uptime_pct - a.uptime_pct || a.anomaly_count - b.anomaly_count
+  );
 
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ color: 'var(--text-1)', fontSize: '20px', fontWeight: 600, margin: 0 }}>
-          Facility SLA Dashboard
-        </h1>
-        <p style={{ color: 'var(--text-2)', fontSize: '13px', marginTop: '4px' }}>
-          Last 7 days — uptime, incidents, and anomalies across all facilities
-        </p>
+  const avgUptimeCount   = useCountUp(avgUptime, 900);
+  const anomaliesCount   = useCountUp(totalAnomalies, 900);
+  const criticalCount    = useCountUp(totalCritical, 900);
+  const incidentsCount   = useCountUp(totalIncidents, 900);
+
+  const now   = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() - 7);
+  const fmtDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+  return (
+    <>
+      {/* Header Bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 34px',
+        borderBottom: '1px solid var(--border)',
+        flex: 'none',
+      }}>
+        <div style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '10px',
+          letterSpacing: '0.2em',
+          color: 'var(--text-4)',
+        }}>
+          SLA DASHBOARD <span style={{ color: 'var(--text-light)' }}>/</span> LAST 7 DAYS
+        </div>
+        <span style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: '11px',
+          color: 'var(--text-2)',
+        }}>
+          {fmtDate(start)} – {fmtDate(now)}
+        </span>
       </div>
 
-      {loading && <p style={{ color: 'var(--text-2)' }}>Loading...</p>}
-      {error   && <p style={{ color: 'var(--offline)' }}>Error: {error}</p>}
+      {/* Main Content — fades/rises in on every mount (initial load,
+          reload, or route switch into this page) and smooth-scrolls on
+          its own axis, matching the rest of the app's page-transition
+          convention. */}
+      <div className="fade-in" style={{ flex: 1, overflow: 'auto', scrollBehavior: 'smooth', padding: '32px 34px 48px' }}>
 
-      {!loading && !error && (
-        <>
-          {/* Summary metric cards */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-            <MetricCard icon={<Activity size={14} />}    label="Avg Uptime"         value={`${avgUptime}%`}    color="var(--online)" />
-            <MetricCard icon={<AlertTriangle size={14} />} label="Total Anomalies"  value={totalAnomalies}     color="var(--degraded)" />
-            <MetricCard icon={<Zap size={14} />}         label="Critical Anomalies" value={totalCritical}      color="var(--offline)" />
-            <MetricCard icon={<Activity size={14} />}    label="Total Incidents"    value={totalIncidents}     color="var(--text-2)" />
-          </div>
+        {/* Title */}
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{
+            fontFamily: 'Archivo, sans-serif',
+            fontWeight: 800,
+            fontSize: '34px',
+            margin: '0 0 6px',
+            letterSpacing: '-0.02em',
+          }}>
+            Facility SLA
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-2)', margin: 0 }}>
+            Uptime, incidents, and anomalies across all facilities, ranked over the last 7 days.
+          </p>
+        </div>
 
-          {/* Facility leaderboard */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)',
-                        borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)',
-                          display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Trophy size={14} color="var(--text-2)" />
-              <span style={{ color: 'var(--text-1)', fontSize: '14px', fontWeight: 600 }}>
-                Facility Rankings
-              </span>
+        {loading && (
+          <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>Loading...</p>
+        )}
+
+        {error && (
+          <p style={{ fontSize: '13px', color: 'var(--critical)' }}>Error: {error}</p>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Summary metric cards */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+              <MetricCard label="AVG UPTIME"         value={avgUptimeCount.toFixed(1)} suffix="%" color="var(--online)"   delay={0} />
+              <MetricCard label="TOTAL ANOMALIES"    value={Math.round(anomaliesCount)}               color="var(--degraded-dark)" delay={0.06} />
+              <MetricCard label="CRITICAL ANOMALIES" value={Math.round(criticalCount)}                color="var(--critical)" delay={0.12} />
+              <MetricCard label="TOTAL INCIDENTS"    value={Math.round(incidentsCount)}               color="var(--text-1)"  delay={0.18} />
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['Rank', 'Facility', 'Devices', 'Uptime (7d)', 'Incidents', 'Anomalies', 'Critical'].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left',
-                                         color: 'var(--text-2)', fontWeight: 500 }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {facilities.map((f, index) => (
-                  <tr key={f.facility_id}
-                      style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ color: index === 0 ? '#F59E0B' : 'var(--text-2)',
-                                     fontWeight: index === 0 ? 700 : 400,
-                                     fontSize: '14px' }}>
-                        #{index + 1}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ color: 'var(--text-1)', fontWeight: 500 }}>
+            {/* Facility leaderboard */}
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: '14px 22px',
+                background: 'var(--text-1)',
+              }}>
+                <span style={{
+                  fontFamily: 'Archivo, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  color: 'var(--bg)',
+                }}>
+                  Facility Rankings
+                </span>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: GRID_COLUMNS,
+                gap: '16px',
+                padding: '12px 22px',
+                borderBottom: '1px solid var(--border)',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '9px',
+                letterSpacing: '0.12em',
+                color: 'var(--text-3)',
+              }}>
+                <span>RANK</span>
+                <span>FACILITY</span>
+                <span>DEVICES</span>
+                <span>UPTIME 7D</span>
+                <span style={{ textAlign: 'right' }}>INCIDENTS</span>
+                <span style={{ textAlign: 'right' }}>ANOMALIES</span>
+                <span style={{ textAlign: 'right' }}>CRITICAL</span>
+              </div>
+
+              {ranked.length === 0 && (
+                <p style={{ padding: '24px 22px', fontSize: '13px', color: 'var(--text-3)', textAlign: 'center' }}>
+                  No facilities found.
+                </p>
+              )}
+
+              {ranked.map((f, i) => {
+                const rank = i + 1;
+                return (
+                  <div
+                    key={f.facility_id}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: GRID_COLUMNS,
+                      gap: '16px',
+                      padding: '17px 22px',
+                      borderBottom: i < ranked.length - 1 ? '1px solid var(--border-2)' : 'none',
+                      alignItems: 'center',
+                      animation: `floatUp 0.4s ease-out ${i * 0.06}s both`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(33, 29, 23, 0.03)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    {/* Rank */}
+                    <span style={{
+                      fontFamily: 'Archivo, sans-serif',
+                      fontWeight: 800,
+                      fontSize: '16px',
+                      color: rank === 1 ? 'var(--accent)' : 'var(--text-3)',
+                    }}>
+                      #{rank}
+                    </span>
+
+                    {/* Facility */}
+                    <div>
+                      <div style={{ fontSize: '14.5px', fontWeight: 600, color: 'var(--text-1)' }}>
                         {f.facility_name}
                       </div>
-                      <div style={{ color: 'var(--text-2)', fontSize: '11px',
-                                   fontFamily: 'JetBrains Mono, monospace' }}>
+                      <div style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: '10.5px',
+                        color: 'var(--text-3)',
+                        marginTop: '2px',
+                      }}>
                         {f.facility_code}
                       </div>
-                    </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-2)' }}>
+                    </div>
+
+                    {/* Devices */}
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--text-3)' }}>
                       <span style={{ color: 'var(--online)' }}>{f.online}</span>
-                      {f.degraded > 0 && <span style={{ color: 'var(--degraded)' }}> / {f.degraded}</span>}
+                      {f.degraded > 0 && <span style={{ color: 'var(--degraded-dark)' }}> / {f.degraded}</span>}
                       {f.offline  > 0 && <span style={{ color: 'var(--offline)' }}> / {f.offline}</span>}
-                      <span style={{ color: 'var(--text-3)' }}> of {f.total_devices}</span>
-                    </td>
-                    <td style={{ padding: '12px 16px', minWidth: '160px' }}>
-                      <UptimeBar pct={f.uptime_pct} />
-                    </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-2)',
-                                 fontFamily: 'JetBrains Mono, monospace' }}>
+                      {' '}of {f.total_devices}
+                    </span>
+
+                    {/* Uptime 7d — bar fills in from 0 on every mount. */}
+                    <UptimeBar pct={f.uptime_pct} delay={i * 0.06} />
+
+                    {/* Incidents */}
+                    <span style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '12.5px',
+                      color: 'var(--text-2)',
+                      textAlign: 'right',
+                    }}>
                       {f.incident_count}
-                    </td>
-                    <td style={{ padding: '12px 16px', color: 'var(--text-2)',
-                                 fontFamily: 'JetBrains Mono, monospace' }}>
+                    </span>
+
+                    {/* Anomalies */}
+                    <span style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '12.5px',
+                      color: 'var(--text-2)',
+                      textAlign: 'right',
+                    }}>
                       {f.anomaly_count}
-                    </td>
-                    <td style={{ padding: '12px 16px',
-                                 color: f.critical_anomalies > 0 ? 'var(--offline)' : 'var(--text-2)',
-                                 fontFamily: 'JetBrains Mono, monospace',
-                                 fontWeight: f.critical_anomalies > 0 ? 600 : 400 }}>
+                    </span>
+
+                    {/* Critical */}
+                    <span style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: '12.5px',
+                      color: f.critical_anomalies > 0 ? 'var(--critical)' : 'var(--text-3)',
+                      fontWeight: f.critical_anomalies > 0 ? 700 : 400,
+                      textAlign: 'right',
+                    }}>
                       {f.critical_anomalies}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </div>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }

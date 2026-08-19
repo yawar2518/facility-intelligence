@@ -27,5 +27,5 @@ export function useFacilityStatusChanges(facilityId, limit = 50) {
     fetchChanges()
   }, [facilityId, limit])
 
-  return { changes, loading, error }
+  return { changes, setChanges, loading, error }
 }

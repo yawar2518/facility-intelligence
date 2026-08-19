@@ -31,14 +31,26 @@ def calculate_uptime(device, days=7):
     offline_seconds = 0.0
     degraded_seconds = 0.0
 
-    for change in changes:
-        # duration_seconds = time spent in previous_status
+    changes = list(changes)
+
+    for i, change in enumerate(changes):
+        # duration_seconds = time spent in previous_status, measured from
+        # the actual previous change — which for the *first* change in this
+        # window may have started well before window_start (e.g. the device
+        # was ONLINE for 20 days, then went OFFLINE 2 days into our 7-day
+        # window). Only the portion inside the window counts.
         duration = change.duration_seconds or 0.0
 
-        # Cap duration to the window — a device could have been
-        # ONLINE for 2 days before the window started, we only
-        # count the portion inside the window
-        duration = min(duration, window_seconds)
+        if i == 0:
+            portion_in_window = (change.changed_at - window_start).total_seconds()
+            duration = min(duration, portion_in_window)
+        else:
+            # Every later change's previous_status started at the prior
+            # change's timestamp, which is already inside the window,
+            # so its full duration necessarily fits inside the window.
+            duration = min(duration, window_seconds)
+
+        duration = max(duration, 0.0)
 
         if change.previous_status == 'ONLINE':
             online_seconds += duration
@@ -47,17 +59,24 @@ def calculate_uptime(device, days=7):
         elif change.previous_status == 'DEGRADED':
             degraded_seconds += duration
 
-    # Account for current status duration (from last change to now)
-    last_change = changes.last()
+    # Account for the current status duration — from the last change to now,
+    # or if the device had no status changes in the window at all, it has
+    # been in its current status for the entire window.
+    last_change = changes[-1] if changes else None
     if last_change:
         current_duration = (now - last_change.changed_at).total_seconds()
-        current_duration = min(current_duration, window_seconds)
-        if last_change.new_status == 'ONLINE':
-            online_seconds += current_duration
-        elif last_change.new_status == 'OFFLINE':
-            offline_seconds += current_duration
-        elif last_change.new_status == 'DEGRADED':
-            degraded_seconds += current_duration
+        current_status = last_change.new_status
+    else:
+        current_duration = window_seconds
+        current_status = device.status
+
+    current_duration = min(max(current_duration, 0.0), window_seconds)
+    if current_status == 'ONLINE':
+        online_seconds += current_duration
+    elif current_status == 'OFFLINE':
+        offline_seconds += current_duration
+    elif current_status == 'DEGRADED':
+        degraded_seconds += current_duration
 
     # Calculate percentage
     uptime_pct = round((online_seconds / window_seconds) * 100, 2)

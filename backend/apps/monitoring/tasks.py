@@ -39,7 +39,7 @@ def _record_status_change(device, new_status, reason, metadata=None):
         duration_seconds = (now - last_change.changed_at).total_seconds()
 
     # Write the transition record
-    DeviceStatusChange.objects.create(
+    change = DeviceStatusChange.objects.create(
         device=device,
         lane=device.lane,
         area=device.lane.area,
@@ -66,12 +66,18 @@ def _record_status_change(device, new_status, reason, metadata=None):
             f"facility_{str(device.lane.area.facility.id)}",
             {
                 'type': 'device_status_update',  # maps to consumer method name
+                'change_id': str(change.id),
                 'device_id': str(device.id),
                 'device_code': device.code,
                 'new_status': new_status,
                 'previous_status': previous_status,
                 'reason': reason,
                 'changed_at': now.isoformat(),
+                'duration_seconds': duration_seconds,
+                'metadata': metadata or {},
+                'facility_name': device.lane.area.facility.name,
+                'area_name': device.lane.area.name,
+                'lane_name': device.lane.name,
             }
         )
     except Exception as e:

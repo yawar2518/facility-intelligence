@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#f2ece2;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#211d17}
+  a{text-decoration:none;color:inherit}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(33,29,23,.16);border-radius:5px}
+  @keyframes pulseG{0%{box-shadow:0 0 0 0 rgba(31,158,122,.45)}70%{box-shadow:0 0 0 6px rgba(31,158,122,0)}100%{box-shadow:0 0 0 0 rgba(31,158,122,0)}}
+  @keyframes pulseA{0%{box-shadow:0 0 0 0 rgba(194,133,26,.5)}70%{box-shadow:0 0 0 6px rgba(194,133,26,0)}100%{box-shadow:0 0 0 0 rgba(194,133,26,0)}}
+  @keyframes floatUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden">
+
+  <aside style="width:216px;flex:none;background:#ebe3d5;border-right:1px solid rgba(33,29,23,.12);display:flex;flex-direction:column">
+    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <div style="font-family:Archivo,sans-serif;font-weight:900;font-size:24px;letter-spacing:-.02em">Argus</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.24em;color:#9a9081;margin-top:5px">PARKING&nbsp;INTELLIGENCE</div>
+    </div>
+    <div style="padding:11px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <span style="width:7px;height:7px;border-radius:50%;background:#1f9e7a;animation:pulseG 2.6s infinite;flex:none"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#6b6357">LIVE&nbsp;·&nbsp;WEBSOCKET</span>
+    </div>
+    <nav style="flex:1;padding:16px 14px;overflow:auto">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:0 8px 8px">MONITOR</div>
+      <a href="Overview.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Overview</span></a>
+      <a href="Status-Grid.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">Status Grid</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#cc3b30">2↓</span></a>
+      <a href="Timeline.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;background:#211d17;margin-bottom:3px"><span style="font-size:12.5px;color:#f2ece2;font-weight:500">Timeline</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">DETECT</div>
+      <a href="Anomalies.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Anomalies</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(204,59,48,.14);color:#cc3b30;padding:1px 6px;border-radius:8px">5</span></a>
+      <a href="Alert-Logs.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">Alert Logs</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">PREDICT</div>
+      <a href="Maintenance.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Maintenance</span></a>
+      <a href="SLA-Dashboard.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">SLA Dashboard</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">REPLAY</div>
+      <a href="Playback.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Playback</span></a>
+    </nav>
+    <a href="Public-Status.dc.html" style="margin:0 14px 6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed rgba(33,29,23,.2);border-radius:7px" style-hover="background:rgba(33,29,23,.05)"><span style="width:6px;height:6px;border-radius:50%;background:#1f9e7a;flex:none"></span><span style="font-size:11px;color:#6b6357">Public status page</span><span style="margin-left:auto;font-size:11px;color:#a89e8d">↗</span></a>
+    <div style="padding:14px 18px;border-top:1px solid rgba(33,29,23,.1);display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:7px;background:#211d17;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:800;font-size:12px;color:#f2ece2;flex:none">A</div>
+      <div><div style="font-size:11.5px;font-weight:500">A. Rehman</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9a9081">Admin · all sites</div></div>
+    </div>
+  </aside>
+
+  <main style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 34px;border-bottom:1px solid rgba(33,29,23,.1);flex:none">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:#9a9081">TIMELINE <span style="color:#c9bfae">/</span> STATUS CHANGES</div>
+      <span style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;background:#fbf8f2;border:1px solid rgba(33,29,23,.16);border-radius:7px;padding:6px 12px;cursor:pointer">Downtown Garage · DG-01 <span style="color:#bf5a2f">▾</span></span>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:32px 34px 48px">
+      <div style="margin-bottom:26px">
+        <h1 style="font-family:Archivo,sans-serif;font-weight:800;font-size:34px;margin:0 0 6px;letter-spacing:-.02em">Timeline</h1>
+        <p style="font-size:13px;color:#6b6357;margin:0">Every ONLINE / OFFLINE / DEGRADED transition, newest first. Tuesday 18 August.</p>
+      </div>
+
+      <div style="max-width:760px">
+        <!-- entry -->
+        <div style="display:flex;animation:floatUp .4s ease-out both">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">15:22:41</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#c2851a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #c2851a;animation:pulseA 2.4s infinite;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">LPR-03</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#c2851a;border:1px solid rgba(194,133,26,.5);border-radius:4px;padding:1px 6px">DEGRADED</span></div><div style="font-size:12px;color:#6b6357">Level 2 / Entry Lane 2 · Error detected <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-left:4px">E_FOCUS_LOST</span></div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">14:58:10</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#1f9e7a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #1f9e7a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">BG-01</span><span style="font-size:11px;font-weight:500;color:#c2851a;border:1px solid rgba(194,133,26,.5);border-radius:4px;padding:1px 6px">DEGRADED</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">held 22m</span></div><div style="font-size:12px;color:#6b6357">Level 1 / Entry Lane 1 · Error cleared</div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">14:36:02</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#c2851a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #c2851a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">BG-01</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#c2851a;border:1px solid rgba(194,133,26,.5);border-radius:4px;padding:1px 6px">DEGRADED</span></div><div style="font-size:12px;color:#6b6357">Level 1 / Entry Lane 1 · Error detected <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-left:4px">E_GATE_SLOW</span></div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">11:47:20</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#c2851a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #c2851a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">PK-01</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#c2851a;border:1px solid rgba(194,133,26,.5);border-radius:4px;padding:1px 6px">DEGRADED</span></div><div style="font-size:12px;color:#6b6357">Level 1 / Pay Station 1 · Error detected <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-left:4px">E_CARD_READ</span></div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">09:31:12</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#1f9e7a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #1f9e7a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">BG-03</span><span style="font-size:11px;font-weight:500;color:#cc3b30;border:1px solid rgba(204,59,48,.4);border-radius:4px;padding:1px 6px">OFFLINE</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">down 45s</span></div><div style="font-size:12px;color:#6b6357">Level 2 / Entry Lane 2 · Heartbeat resumed</div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">09:30:27</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#cc3b30;border:2px solid #f2ece2;box-shadow:0 0 0 1px #cc3b30;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">BG-03</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#cc3b30;border:1px solid rgba(204,59,48,.4);border-radius:4px;padding:1px 6px">OFFLINE</span></div><div style="font-size:12px;color:#6b6357">Level 2 / Entry Lane 2 · Heartbeat timeout</div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">08:15:00</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;bottom:-8px;width:1px;background:rgba(33,29,23,.14)"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#1f9e7a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #1f9e7a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 24px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">OS-01</span><span style="font-size:11px;font-weight:500;color:#a89e8d;border:1px solid rgba(33,29,23,.2);border-radius:4px;padding:1px 6px">UNKNOWN</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span></div><div style="font-size:12px;color:#6b6357">Rooftop / Rooftop Entry · System startup</div></div>
+        </div>
+
+        <div style="display:flex">
+          <div style="width:96px;flex:none;text-align:right;padding-right:16px;padding-top:1px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#211d17">07:02:33</div></div>
+          <div style="width:22px;flex:none;position:relative;display:flex;justify-content:center"><span style="position:absolute;top:4px;height:0;width:1px"></span><span style="position:relative;z-index:1;width:9px;height:9px;border-radius:50%;background:#1f9e7a;border:2px solid #f2ece2;box-shadow:0 0 0 1px #1f9e7a;margin-top:2px"></span></div>
+          <div style="flex:1;padding:0 0 4px 18px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500">LPR-02</span><span style="font-size:11px;font-weight:500;color:#c2851a;border:1px solid rgba(194,133,26,.5);border-radius:4px;padding:1px 6px">DEGRADED</span><span style="color:#a89e8d;font-size:12px">→</span><span style="font-size:11px;font-weight:500;color:#1f9e7a;border:1px solid rgba(31,158,122,.4);border-radius:4px;padding:1px 6px">ONLINE</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">manual</span></div><div style="font-size:12px;color:#6b6357">Level 1 / Exit Lane 1 · Manual override by A. Rehman</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

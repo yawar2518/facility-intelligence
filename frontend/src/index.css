@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 *, *::before, *::after {
@@ -5,41 +6,254 @@
 }
 
 :root {
-  --bg:        #000000;
-  --surface:   #0A0A0A;
-  --surface-2: #111111;
-  --border:    #1A1A1A;
-  --border-2:  #262626;
-  --text-1:    #EDEDED;
-  --text-2:    #555;
-  --text-3:    #3A3A3A;
-  --accent:    #EDEDED;
-  --online:    #50e3c2;
-  --offline:   #ff0000;
-  --degraded:  #f5a623;
-  --unknown:   #404040;
+  /* Backgrounds */
+  --bg:             #f2ece2;
+  --surface:        #fbf8f2;
+  --surface-2:      #ebe3d5;
+  --surface-white:  #ffffff;
+
+  /* Borders */
+  --border:         rgba(33, 29, 23, 0.12);
+  --border-2:       rgba(33, 29, 23, 0.1);
+  --border-strong:  rgba(33, 29, 23, 0.16);
+
+  /* Text colors */
+  --text-1:         #211d17;
+  --text-2:         #6b6357;
+  --text-3:         #a89e8d;
+  --text-4:         #9a9081;
+  --text-mid:       #4a453b;
+  --text-light:     #c9bfae;
+
+  /* Status colors */
+  --online:         #1f9e7a;
+  --offline:        #cc3b30;
+  --degraded:       #c2851a;
+  --degraded-dark:  #9a6a12;
+  --unknown:        #a89e8d;
+
+  /* Severity colors */
+  --critical:       #cc3b30;
+  --critical-light: #ff9c94;
+  --high:           #c2851a;
+  --high-dark:      #9a6a12;
+  --medium:         #d8b071;
+  --medium-dark:    #a07d3a;
+  --low:            #8a8172;
+
+  /* Accent */
+  --accent:         #bf5a2f;
 }
 
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--text-1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 13px;
   line-height: 1.5;
 }
 
-* {
-  transition-property: color, background-color, border-color, opacity;
-  transition-duration: 120ms;
-  transition-timing-function: ease;
+a {
+  text-decoration: none;
+  color: inherit;
 }
 
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(33, 29, 23, 0.16);
+  border-radius: 5px;
+}
+
+/* Animations */
+@keyframes pulseG {
+  0% { box-shadow: 0 0 0 0 rgba(31, 158, 122, 0.45); }
+  70% { box-shadow: 0 0 0 6px rgba(31, 158, 122, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(31, 158, 122, 0); }
+}
+
+@keyframes pulseR {
+  0% { box-shadow: 0 0 0 0 rgba(204, 59, 48, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(204, 59, 48, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(204, 59, 48, 0); }
+}
+
+@keyframes pulseA {
+  0% { box-shadow: 0 0 0 0 rgba(194, 133, 26, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(194, 133, 26, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(194, 133, 26, 0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes barGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes riseBar {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes floatUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toastIn {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes drawerIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes skeletonPulse {
+  0%, 100% {
+    background: rgba(33, 29, 23, 0.08);
+  }
+  50% {
+    background: rgba(33, 29, 23, 0.16);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translate(0, 20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Brief tinted flash on a row that just arrived over the live
+   WebSocket feed (e.g. a new alert log), fading back to transparent so
+   it doesn't stay marked forever. */
+@keyframes highlightFadeGreen {
+  0%   { background: rgba(31, 158, 122, 0.16); }
+  100% { background: transparent; }
+}
+
+@keyframes highlightFadeRed {
+  0%   { background: rgba(204, 59, 48, 0.14); }
+  100% { background: transparent; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+/* Utility classes */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.6s ease-out both;
+}
+
+.skeleton {
+  animation: skeletonPulse 2s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* Smooth transitions for all interactive elements */
+button,
+a,
+select,
+input,
+[role="button"],
+.interactive {
+  transition: all 150ms ease-out;
+}
+
+/* Card entrance stagger delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
 
 .font-mono {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.font-archivo {
+  font-family: 'Archivo', sans-serif;
 }

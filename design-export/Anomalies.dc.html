@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#f2ece2;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#211d17}
+  a{text-decoration:none;color:inherit}
+  select{font-family:'JetBrains Mono',monospace;color:#211d17}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:rgba(33,29,23,.16);border-radius:5px}
+  @keyframes pulseG{0%{box-shadow:0 0 0 0 rgba(31,158,122,.45)}70%{box-shadow:0 0 0 6px rgba(31,158,122,0)}100%{box-shadow:0 0 0 0 rgba(31,158,122,0)}}
+  @keyframes pulseR{0%{box-shadow:0 0 0 0 rgba(204,59,48,.5)}70%{box-shadow:0 0 0 7px rgba(204,59,48,0)}100%{box-shadow:0 0 0 0 rgba(204,59,48,0)}}
+  @keyframes floatUp{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+<div style="display:flex;height:100vh;overflow:hidden">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside style="width:216px;flex:none;background:#ebe3d5;border-right:1px solid rgba(33,29,23,.12);display:flex;flex-direction:column">
+    <div style="padding:22px 20px 16px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <div style="font-family:Archivo,sans-serif;font-weight:900;font-size:24px;letter-spacing:-.02em">Argus</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.24em;color:#9a9081;margin-top:5px">PARKING&nbsp;INTELLIGENCE</div>
+    </div>
+    <div style="padding:11px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(33,29,23,.1)">
+      <span style="width:7px;height:7px;border-radius:50%;background:#1f9e7a;animation:pulseG 2.6s infinite;flex:none"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#6b6357">LIVE&nbsp;·&nbsp;WEBSOCKET</span>
+    </div>
+    <nav style="flex:1;padding:16px 14px;overflow:auto">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:0 8px 8px">MONITOR</div>
+      <a href="Overview.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Overview</span></a>
+      <a href="Status-Grid.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">Status Grid</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:#cc3b30">2↓</span></a>
+      <a href="Timeline.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Timeline</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">DETECT</div>
+      <a href="Anomalies.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;background:#211d17;margin-bottom:3px"><span style="font-size:12.5px;color:#f2ece2;font-weight:500">Anomalies</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(255,156,148,.22);color:#ffb3ac;padding:1px 6px;border-radius:8px">5</span></a>
+      <a href="Alert-Logs.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">Alert Logs</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">PREDICT</div>
+      <a href="Maintenance.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Maintenance</span></a>
+      <a href="SLA-Dashboard.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px;margin-bottom:1px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;white-space:nowrap;color:#6b6357">SLA Dashboard</span></a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#a89e8d;padding:16px 8px 8px">REPLAY</div>
+      <a href="Playback.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:7px" style-hover="background:rgba(33,29,23,.06)"><span style="font-size:12.5px;color:#6b6357">Playback</span></a>
+    </nav>
+    <a href="Public-Status.dc.html" style="margin:0 14px 6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px dashed rgba(33,29,23,.2);border-radius:7px" style-hover="background:rgba(33,29,23,.05)"><span style="width:6px;height:6px;border-radius:50%;background:#1f9e7a;flex:none"></span><span style="font-size:11px;color:#6b6357">Public status page</span><span style="margin-left:auto;font-size:11px;color:#a89e8d">↗</span></a>
+    <div style="padding:14px 18px;border-top:1px solid rgba(33,29,23,.1);display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:7px;background:#211d17;display:flex;align-items:center;justify-content:center;font-family:Archivo,sans-serif;font-weight:800;font-size:12px;color:#f2ece2;flex:none">A</div>
+      <div><div style="font-size:11.5px;font-weight:500">A. Rehman</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9a9081">Admin · all sites</div></div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 34px;border-bottom:1px solid rgba(33,29,23,.1);flex:none">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:#9a9081">ANOMALIES <span style="color:#c9bfae">/</span> ALL FACILITIES</div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6357">15:24:07 PKT</span>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:32px 34px 48px">
+      <!-- header -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <h1 style="font-family:Archivo,sans-serif;font-weight:800;font-size:34px;margin:0 0 6px;letter-spacing:-.02em">Anomalies</h1>
+          <p style="font-size:13px;color:#6b6357;margin:0">Traffic &amp; device anomalies detected by IsolationForest across all facilities.</p>
+        </div>
+        <div style="display:flex;gap:26px;text-align:right">
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:32px;color:#cc3b30;line-height:1">1</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">CRITICAL</div></div>
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:32px;color:#9a6a12;line-height:1">3</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">HIGH</div></div>
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:32px;color:#a07d3a;line-height:1">2</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">MEDIUM</div></div>
+          <div><div style="font-family:Archivo,sans-serif;font-weight:900;font-size:32px;color:#a89e8d;line-height:1">2</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#a89e8d;margin-top:3px">LOW</div></div>
+        </div>
+      </div>
+
+      <!-- filters -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+        <select style="background:#fbf8f2;border:1px solid rgba(33,29,23,.16);border-radius:7px;padding:7px 11px;font-size:12px;cursor:pointer;outline:none"><option>All severities</option><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option></select>
+        <select style="background:#fbf8f2;border:1px solid rgba(33,29,23,.16);border-radius:7px;padding:7px 11px;font-size:12px;cursor:pointer;outline:none"><option>All types</option><option>Traffic Spike</option><option>Traffic Drop</option><option>Device Flapping</option><option>Error Rate</option></select>
+        <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#6b6357;cursor:pointer"><input type="checkbox" style="accent-color:#211d17"> Show acknowledged</label>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6357">8 anomalies</span>
+        <button style="display:flex;align-items:center;gap:6px;background:#fbf8f2;border:1px solid rgba(33,29,23,.16);border-radius:7px;padding:7px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#211d17;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">↓ Export CSV</button>
+      </div>
+
+      <!-- list -->
+      <div style="background:#fbf8f2;border:1px solid rgba(33,29,23,.12);border-radius:12px;overflow:hidden">
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09);animation:floatUp .4s ease-out both"><span style="width:4px;flex:none;border-radius:2px;background:#cc3b30"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#cc3b30">CRITICAL</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">4.2σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-bottom:4px">TRAFFIC DROP</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">Exit throughput 87% below forecast — BG-02 barrier not cycling; vehicles backing into the deck.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">AP-01 · Airport Parking / T1 Exit Lane · 18 Aug 15:22</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">2m ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09)"><span style="width:4px;flex:none;border-radius:2px;background:#c2851a"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#9a6a12">HIGH</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">3.4σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-bottom:4px">ERROR RATE</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">PK-01 declined 9 consecutive card payments in under 3 minutes.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">AP-01 · Airport Parking / T1 Exit Lane · 18 Aug 11:40</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">14m ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09)"><span style="width:4px;flex:none;border-radius:2px;background:#c2851a"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#9a6a12">HIGH</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">3.1σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-bottom:4px">DEVICE FLAPPING</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">T2-LPR-01 flapped ONLINE↔OFFLINE 6× in 4 minutes — likely a loose network connector.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">AP-01 · Airport Parking / T2 Entry · 18 Aug 11:10</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">38m ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09)"><span style="width:4px;flex:none;border-radius:2px;background:#c2851a"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#9a6a12">HIGH</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">2.9σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9a6a12;margin-bottom:4px">TRAFFIC SPIKE</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">Inbound volume 3.4× the hourly norm at Entry Lane 1 — likely event traffic.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">DG-01 · Downtown Garage / Entry Lane 1 · 18 Aug 09:30</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">1h ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09)"><span style="width:4px;flex:none;border-radius:2px;background:#d8b071"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#a07d3a">MEDIUM</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">2.2σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a07d3a;margin-bottom:4px">ERROR RATE</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">PK-01 card-reader error rate holding at 12% over the last hour.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">MC-01 · Mall Complex / B1 Pay Station · 18 Aug 14:05</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">2h ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09)"><span style="width:4px;flex:none;border-radius:2px;background:#d8b071"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#a07d3a">MEDIUM</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">2.0σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#a07d3a;margin-bottom:4px">TRAFFIC SPIKE</div><p style="font-size:13px;line-height:1.5;color:#211d17;margin:0">Entry volume 2.1× the weekday norm at 14:00.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">MC-01 · Mall Complex / B1 Entry · 18 Aug 14:00</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">2h ago</span><button style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b6357;background:none;border:1px solid rgba(33,29,23,.2);border-radius:6px;padding:4px 11px;cursor:pointer" style-hover="background:#211d17;color:#f2ece2">Acknowledge</button></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(33,29,23,.09);opacity:.5"><span style="width:4px;flex:none;border-radius:2px;background:#c9bfae"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#8a8172">LOW</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">1.6σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8a8172;margin-bottom:4px">TRAFFIC DROP</div><p style="font-size:13px;line-height:1.5;color:#4a453b;margin:0">Rooftop entries 40% below the Tuesday norm.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">DG-01 · Downtown Garage / Rooftop · 18 Aug 12:10</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">3h ago</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#1f9e7a">✓ acknowledged</span></div></div>
+
+        <div style="display:flex;gap:14px;padding:16px 20px;opacity:.5"><span style="width:4px;flex:none;border-radius:2px;background:#c9bfae"></span><div style="width:118px;flex:none"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#8a8172">LOW</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d;margin-top:3px">1.4σ</div></div><div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8a8172;margin-bottom:4px">DEVICE FLAPPING</div><p style="font-size:13px;line-height:1.5;color:#4a453b;margin:0">LPR-03 brief 8-second dropout, recovered automatically.</p><div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#a89e8d;margin-top:6px">DG-01 · Downtown Garage / L2 Entry · 18 Aug 10:48</div></div><div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#a89e8d">5h ago</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#1f9e7a">✓ acknowledged</span></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

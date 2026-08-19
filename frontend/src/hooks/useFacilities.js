@@ -42,5 +42,5 @@ export function useFacilities() {
     fetchFacilities()
   }, []) // empty array = run once on mount
 
-  return { facilities, loading, error }
+  return { facilities, setFacilities, loading, error }
 }

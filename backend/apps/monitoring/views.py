@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, viewsets, filters
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count, Q
 from datetime import timedelta
 
 from apps.hierarchy.models import Device, Area, Lane, Facility
@@ -70,14 +71,19 @@ class FacilityHealthSummaryView(APIView):
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
 
         devices = Device.objects.filter(lane__area__facility_id=facility_id, is_active=True)
-        if not devices.exists():
+        counts = devices.aggregate(
+            total=Count('id'),
+            online=Count('id', filter=Q(status='ONLINE')),
+            offline=Count('id', filter=Q(status='OFFLINE')),
+            degraded=Count('id', filter=Q(status='DEGRADED')),
+            unknown=Count('id', filter=Q(status='UNKNOWN')),
+        )
+        total, online, offline, degraded, unknown = (
+            counts['total'], counts['online'], counts['offline'], counts['degraded'], counts['unknown'],
+        )
+        if total == 0:
             return Response({'error': 'Facility not found or has no devices'}, status=status.HTTP_404_NOT_FOUND)
 
-        total    = devices.count()
-        online   = devices.filter(status='ONLINE').count()
-        offline  = devices.filter(status='OFFLINE').count()
-        degraded = devices.filter(status='DEGRADED').count()
-        unknown  = devices.filter(status='UNKNOWN').count()
         health_score = round(((online + degraded) / total) * 100, 1)
 
         return Response({
@@ -102,7 +108,13 @@ class FacilityDeviceTreeView(APIView):
             return Response({'error': 'Facility not found'}, status=status.HTTP_404_NOT_FOUND)
 
         areas = Area.objects.filter(facility=facility, is_active=True).prefetch_related('lanes__devices').order_by('name')
-        areas_data = []
+        areas_data  = []
+        total_lanes = 0
+        total_devices = 0
+        online   = 0
+        offline  = 0
+        degraded = 0
+
         for area in areas:
             lanes_data  = []
             area_devices = []
@@ -114,6 +126,8 @@ class FacilityDeviceTreeView(APIView):
                         'code': device.code, 'device_type': device.device_type,
                         'status': device.status, 'last_heartbeat': device.last_heartbeat,
                         'heartbeat_timeout_seconds': device.heartbeat_timeout_seconds,
+                        'serial_number': device.serial_number,
+                        'firmware_version': device.firmware_version,
                     })
                     area_devices.append(device)
                 lanes_data.append({
@@ -123,8 +137,16 @@ class FacilityDeviceTreeView(APIView):
                 })
 
             total   = len(area_devices)
-            offline = sum(1 for d in area_devices if d.status == 'OFFLINE')
-            area_health = round(((total - offline) / total) * 100, 1) if total > 0 else 100.0
+            area_offline  = sum(1 for d in area_devices if d.status == 'OFFLINE')
+            area_online   = sum(1 for d in area_devices if d.status == 'ONLINE')
+            area_degraded = sum(1 for d in area_devices if d.status == 'DEGRADED')
+            area_health = round(((total - area_offline) / total) * 100, 1) if total > 0 else 100.0
+
+            total_lanes   += len(lanes_data)
+            total_devices += total
+            online        += area_online
+            offline       += area_offline
+            degraded      += area_degraded
 
             areas_data.append({
                 'id': str(area.id), 'name': area.name,
@@ -132,10 +154,19 @@ class FacilityDeviceTreeView(APIView):
                 'health_score': area_health, 'lanes': lanes_data,
             })
 
+        health_score = round(((total_devices - offline) / total_devices) * 100, 1) if total_devices > 0 else 100.0
+
         return Response({
             'facility_id': str(facility.id),
             'facility_code': facility.code,
             'facility_name': facility.name,
+            'address': facility.address,
+            'total_devices': total_devices,
+            'total_lanes': total_lanes,
+            'health_score': health_score,
+            'online': online,
+            'offline': offline,
+            'degraded': degraded,
             'areas': areas_data,
         })
 
@@ -219,25 +250,43 @@ class FacilitySLAView(APIView):
         results = []
 
         for facility in all_facilities:
-            devices  = Device.objects.filter(lane__area__facility=facility, is_active=True)
-            total    = devices.count()
-            online   = devices.filter(status='ONLINE').count()
-            degraded = devices.filter(status='DEGRADED').count()
-            offline  = devices.filter(status='OFFLINE').count()
+            devices = list(Device.objects.filter(
+                lane__area__facility=facility, is_active=True,
+            ))
+            total    = len(devices)
+            online   = sum(1 for d in devices if d.status == 'ONLINE')
+            degraded = sum(1 for d in devices if d.status == 'DEGRADED')
+            offline  = sum(1 for d in devices if d.status == 'OFFLINE')
 
-            uptime_pct = round(((online + degraded) / total * 100), 1) if total > 0 else 100.0
+            # True 7-day uptime — time-weighted across each device's actual
+            # status history (DeviceStatusChange), not a snapshot of where
+            # devices happen to be right now. A device counts as "up" for
+            # the portion of the window it spent ONLINE or DEGRADED
+            # (degraded still serves traffic), the same convention the
+            # health-score snapshot endpoints use for "up". Without this,
+            # "Uptime (7d)" was silently just the current fleet health
+            # score repeated — a facility that was down all week but
+            # happens to be back online right now would read as 100%.
+            uptime_seconds = 0.0
+            window_seconds = 0.0
+            for device in devices:
+                u = calculate_uptime(device, days=7)
+                uptime_seconds += u['online_seconds'] + u['degraded_seconds']
+                window_seconds += u['window_seconds']
+            uptime_pct = round((uptime_seconds / window_seconds) * 100, 1) if window_seconds else 100.0
 
             incident_count = DeviceStatusChange.objects.filter(
                 facility=facility, changed_at__gte=since, new_status='OFFLINE',
             ).count()
 
-            anomaly_count = Anomaly.objects.filter(
+            anomaly_counts = Anomaly.objects.filter(
                 facility=facility, detected_at__gte=since,
-            ).count()
-
-            critical_anomalies = Anomaly.objects.filter(
-                facility=facility, detected_at__gte=since, severity='CRITICAL',
-            ).count()
+            ).aggregate(
+                anomaly_count=Count('id'),
+                critical_anomalies=Count('id', filter=Q(severity='CRITICAL')),
+            )
+            anomaly_count = anomaly_counts['anomaly_count']
+            critical_anomalies = anomaly_counts['critical_anomalies']
 
             results.append({
                 'facility_id':        str(facility.id),

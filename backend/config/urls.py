@@ -20,7 +20,10 @@ urlpatterns = [
     path('api/v1/monitoring/', include('apps.monitoring.urls')),
     path('api/v1/ml/', include('apps.ml.urls')),
     path('api/v1/', include('apps.alerts.urls')),
-    path('status/', PublicStatusView.as_view(), name='public-status'),
+    # Note: this can't be 'status/' — the authenticated SPA already owns
+    # that path for its Status Grid page (/status), and the Vite dev
+    # proxy matches by prefix, so the two would collide.
+    path('public-status/', PublicStatusView.as_view(), name='public-status'),
 ]
 
 if settings.DEBUG:
