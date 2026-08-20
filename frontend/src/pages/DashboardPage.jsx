@@ -8,12 +8,98 @@ import { useFacilitySLA } from '../hooks/useFacilitySLA'
 import { useCountUp } from '../hooks/useCountUp'
 import { useLiveEventListener } from '../hooks/useLiveUpdates'
 
+// A shimmering placeholder block — same skeletonPulse animation the
+// design system already ships in index.css, just never wired up to
+// anything yet. Used everywhere below in place of a "0.0%"/"0" that
+// hasn't loaded yet, or a bare "Loading..." string.
+function Skeleton({ width, height = '1em', style }) {
+  return (
+    <span
+      className="skeleton"
+      style={{ display: 'inline-block', width, height, ...style }}
+    />
+  )
+}
+
+// Mirrors the real facility card's exact layout (same padding, border,
+// radius) so there's no size jump the moment real data replaces it —
+// stands in for the plain "Loading..." text.
+function SkeletonFacilityCard({ delay }) {
+  return (
+    <div
+      className="fade-in"
+      style={{
+        flex: 1,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '12px',
+        padding: '20px',
+        animationDelay: `${delay}s`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '4px' }}>
+        <Skeleton width="130px" height="19px" />
+        <Skeleton width="38px" height="22px" />
+      </div>
+      <div style={{ margin: '10px 0 20px' }}>
+        <Skeleton width="150px" height="10px" />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '14px' }}>
+        {Array.from({ length: 12 }, (_, i) => (
+          <Skeleton key={i} width="9px" height="9px" style={{ borderRadius: '2px' }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '14px' }}>
+        <Skeleton width="52px" height="11px" />
+        <Skeleton width="52px" height="11px" />
+      </div>
+    </div>
+  )
+}
+
+// Stands in for one anomaly-feed row while it loads — same severity
+// bar + two text lines + timestamp shape as the real row.
+function SkeletonFeedRow({ delay }) {
+  return (
+    <div className="fade-in" style={{
+      display: 'flex', gap: '13px', padding: '14px 0',
+      borderBottom: '1px solid var(--border-2)', animationDelay: `${delay}s`,
+    }}>
+      <Skeleton width="4px" height="auto" style={{ borderRadius: '2px', alignSelf: 'stretch' }} />
+      <div style={{ flex: 1 }}>
+        <Skeleton width="170px" height="10px" style={{ marginBottom: '9px' }} />
+        <Skeleton width="88%" height="12.5px" style={{ marginBottom: '6px' }} />
+        <Skeleton width="110px" height="9.5px" />
+      </div>
+    </div>
+  )
+}
+
+// Stands in for one recent-events row while it loads — matches the
+// real row's two-line shape (device + transition, then where it is).
+function SkeletonEventRow({ delay }) {
+  return (
+    <div className="fade-in" style={{
+      padding: '11px 0',
+      borderBottom: '1px solid rgba(33, 29, 23, 0.08)', animationDelay: `${delay}s`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+        <Skeleton width="34px" height="10px" />
+        <Skeleton width="56px" height="11px" />
+        <Skeleton width="90px" height="10.5px" />
+      </div>
+      <Skeleton width="160px" height="9.5px" style={{ marginLeft: '46px' }} />
+    </div>
+  )
+}
+
 function DashboardPage() {
   const { facilities, setFacilities, loading, error } = useFacilities()
   const [recentChanges, setRecentChanges] = useState([])
+  const [recentChangesLoading, setRecentChangesLoading] = useState(true)
   const { anomalies, setAnomalies, loading: anomalyLoading, acknowledgeAnomaly } = useAnomalies({ is_acknowledged: false })
-  const { logs: alertLogs } = useAlertLogs()
-  const { facilities: slaFacilities } = useFacilitySLA()
+  const { logs: alertLogs, loading: alertsLoading } = useAlertLogs()
+  const { facilities: slaFacilities, loading: slaLoading } = useFacilitySLA()
   const [currentTime, setCurrentTime] = useState(new Date())
 
   // Update time every second
@@ -53,15 +139,28 @@ function DashboardPage() {
     async function fetchAllChanges() {
       try {
         const allChanges = await Promise.all(
-          facilities.map(f => getFacilityStatusChanges(f.id, 10))
+          facilities.map(f => getFacilityStatusChanges(f.id, 10).then(r =>
+            // The API scopes one response to one facility and only
+            // names it once at the top level — since changes from every
+            // facility get flattened together below, each row needs to
+            // carry its own facility name/code or there's no way to
+            // tell which facility a bare device code like "BG-01" is at.
+            r.data.changes.map(c => ({
+              ...c,
+              facility_name: f.name,
+              facility_code: f.code,
+            }))
+          ))
         )
         const combined = allChanges
-          .flatMap(r => r.data.changes)
+          .flat()
           .sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at))
           .slice(0, 5)
         setRecentChanges(combined)
       } catch (err) {
         console.error(err)
+      } finally {
+        setRecentChangesLoading(false)
       }
     }
 
@@ -239,9 +338,13 @@ function DashboardPage() {
               lineHeight: 0.82,
               letterSpacing: '-0.03em',
             }}>
-              <span style={{ display: 'inline-block', animation: 'fadeIn 0.4s ease-out' }}>
-                {animatedFleetHealth.toFixed(1)}<span style={{ fontSize: '44px', color: 'var(--text-3)' }}>%</span>
-              </span>
+              {loading ? (
+                <Skeleton width="230px" height="79px" style={{ borderRadius: '10px' }} />
+              ) : (
+                <span style={{ display: 'inline-block', animation: 'fadeIn 0.4s ease-out' }}>
+                  {animatedFleetHealth.toFixed(1)}<span style={{ fontSize: '44px', color: 'var(--text-3)' }}>%</span>
+                </span>
+              )}
             </div>
             <p style={{
               fontSize: '16px',
@@ -250,7 +353,12 @@ function DashboardPage() {
               maxWidth: '420px',
               margin: '20px 0 22px',
             }}>
-              {heroDescription}
+              {loading ? (
+                <>
+                  <Skeleton width="100%" height="16px" style={{ marginBottom: '8px' }} />
+                  <Skeleton width="70%" height="16px" />
+                </>
+              ) : heroDescription}
             </p>
             <div style={{
               height: '4px',
@@ -259,7 +367,9 @@ function DashboardPage() {
               overflow: 'hidden',
               maxWidth: '420px',
             }}>
-              {!loading && (
+              {loading ? (
+                <Skeleton width="38%" height="100%" style={{ borderRadius: '2px' }} />
+              ) : (
                 <div style={{
                   height: '100%',
                   width: `${fleetHealth}%`,
@@ -288,15 +398,19 @@ function DashboardPage() {
               <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>
                 Unacknowledged anomalies
               </span>
-              <span style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 800,
-                fontSize: '30px',
-                color: unacknowledgedAnomalies.length > 0 ? 'var(--critical)' : 'var(--text-1)',
-                animation: 'fadeIn 0.4s ease-out',
-              }}>
-                {Math.round(animatedUnacknowledged)}
-              </span>
+              {anomalyLoading ? (
+                <Skeleton width="42px" height="26px" />
+              ) : (
+                <span style={{
+                  fontFamily: 'Archivo, sans-serif',
+                  fontWeight: 800,
+                  fontSize: '30px',
+                  color: unacknowledgedAnomalies.length > 0 ? 'var(--critical)' : 'var(--text-1)',
+                  animation: 'fadeIn 0.4s ease-out',
+                }}>
+                  {Math.round(animatedUnacknowledged)}
+                </span>
+              )}
             </Link>
 
             <Link to="/alert-logs" style={{
@@ -309,14 +423,18 @@ function DashboardPage() {
               <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>
                 Alerts sent · 24h
               </span>
-              <span style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 800,
-                fontSize: '30px',
-                animation: 'fadeIn 0.4s ease-out',
-              }}>
-                {Math.round(animatedAlerts24h)}
-              </span>
+              {alertsLoading ? (
+                <Skeleton width="30px" height="26px" />
+              ) : (
+                <span style={{
+                  fontFamily: 'Archivo, sans-serif',
+                  fontWeight: 800,
+                  fontSize: '30px',
+                  animation: 'fadeIn 0.4s ease-out',
+                }}>
+                  {Math.round(animatedAlerts24h)}
+                </span>
+              )}
             </Link>
 
             <Link to="/sla" style={{
@@ -327,15 +445,19 @@ function DashboardPage() {
               <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>
                 Avg uptime · 7d
               </span>
-              <span style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 800,
-                fontSize: '30px',
-                color: avgUptime === null ? 'var(--text-3)' : avgUptime >= 95 ? 'var(--online)' : avgUptime >= 90 ? 'var(--degraded)' : 'var(--critical)',
-                animation: 'fadeIn 0.4s ease-out',
-              }}>
-                {animatedAvgUptime.toFixed(1)}<span style={{ fontSize: '16px', color: 'var(--text-3)' }}>%</span>
-              </span>
+              {slaLoading ? (
+                <Skeleton width="58px" height="26px" />
+              ) : (
+                <span style={{
+                  fontFamily: 'Archivo, sans-serif',
+                  fontWeight: 800,
+                  fontSize: '30px',
+                  color: avgUptime === null ? 'var(--text-3)' : avgUptime >= 95 ? 'var(--online)' : avgUptime >= 90 ? 'var(--degraded)' : 'var(--critical)',
+                  animation: 'fadeIn 0.4s ease-out',
+                }}>
+                  {animatedAvgUptime.toFixed(1)}<span style={{ fontSize: '16px', color: 'var(--text-3)' }}>%</span>
+                </span>
+              )}
             </Link>
           </div>
         </div>
@@ -351,7 +473,6 @@ function DashboardPage() {
           FACILITIES
         </div>
 
-        {loading && <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>Loading...</p>}
         {error && <p style={{ fontSize: '12px', color: 'var(--critical)' }}>{error}</p>}
 
         <div style={{
@@ -359,7 +480,11 @@ function DashboardPage() {
           gap: '18px',
           marginBottom: '8px',
         }}>
-          {facilities.map((facility, index) => {
+          {loading && [0, 1, 2].map((i) => (
+            <SkeletonFacilityCard key={i} delay={i * 0.08} />
+          ))}
+
+          {!loading && facilities.map((facility, index) => {
             const health = facility.health?.health_score || 0
             const online = facility.health?.online || 0
             const degraded = facility.health?.degraded || 0
@@ -520,7 +645,9 @@ function DashboardPage() {
               )}
             </div>
 
-            {anomalyLoading && <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>Loading...</p>}
+            {anomalyLoading && [0, 1, 2].map((i) => (
+              <SkeletonFeedRow key={i} delay={i * 0.07} />
+            ))}
 
             {!anomalyLoading && unacknowledgedAnomalies.length === 0 && (
               <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>No unacknowledged anomalies</p>
@@ -635,17 +762,18 @@ function DashboardPage() {
               RECENT EVENTS
             </div>
 
-            {recentChanges.length === 0 && (
+            {recentChangesLoading && [0, 1, 2, 3].map((i) => (
+              <SkeletonEventRow key={i} delay={i * 0.06} />
+            ))}
+
+            {!recentChangesLoading && recentChanges.length === 0 && (
               <p style={{ fontSize: '12px', color: 'var(--text-3)' }}>No recent events</p>
             )}
 
-            {recentChanges.map((change, i) => (
+            {!recentChangesLoading && recentChanges.map((change, i) => (
               <div
                 key={change.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
                   padding: '11px 0',
                   borderBottom: i < recentChanges.length - 1
                     ? '1px solid rgba(33, 29, 23, 0.08)'
@@ -653,36 +781,51 @@ function DashboardPage() {
                   animation: `floatUp 0.4s ease-out ${Math.min(i, 10) * 0.05}s both`,
                 }}
               >
-                <span style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '10px',
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: '10px',
+                    color: 'var(--text-3)',
+                    width: '34px',
+                    flex: 'none',
+                  }}>
+                    {formatTimeAgo(change.changed_at)}
+                  </span>
+
+                  <span style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: '11px',
+                    width: '56px',
+                    flex: 'none',
+                  }}>
+                    {change.device_code}
+                  </span>
+
+                  <span style={{ fontSize: '10.5px' }}>
+                    <span style={{ color: statusColor[change.previous_status] || 'var(--text-3)' }}>
+                      {change.previous_status}
+                    </span>
+                    {' '}
+                    <span style={{ color: 'var(--text-3)' }}>→</span>
+                    {' '}
+                    <span style={{ color: statusColor[change.new_status] || 'var(--text-3)' }}>
+                      {change.new_status}
+                    </span>
+                  </span>
+                </div>
+
+                {/* Where — otherwise a bare device code like "BG-01" gives
+                    no clue which facility, area, or lane it's even at. */}
+                <div style={{
+                  fontSize: '10.5px',
                   color: 'var(--text-3)',
-                  width: '34px',
-                  flex: 'none',
+                  marginLeft: '46px',
+                  marginTop: '3px',
                 }}>
-                  {formatTimeAgo(change.changed_at)}
-                </span>
-
-                <span style={{
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '11px',
-                  width: '56px',
-                  flex: 'none',
-                }}>
-                  {change.device_code}
-                </span>
-
-                <span style={{ fontSize: '10.5px' }}>
-                  <span style={{ color: statusColor[change.previous_status] || 'var(--text-3)' }}>
-                    {change.previous_status}
-                  </span>
-                  {' '}
-                  <span style={{ color: 'var(--text-3)' }}>→</span>
-                  {' '}
-                  <span style={{ color: statusColor[change.new_status] || 'var(--text-3)' }}>
-                    {change.new_status}
-                  </span>
-                </span>
+                  {change.facility_name}
+                  {change.facility_code ? ` (${change.facility_code})` : ''}
+                  {' · '}{change.area_name} / {change.lane_name}
+                </div>
               </div>
             ))}
 

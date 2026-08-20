@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, Lock, Eye, EyeOff } from 'lucide-react'
 import { login } from '../api/monitoring'
@@ -74,8 +74,10 @@ function LiveStat({ value, label }) {
 
 // A field with an icon, a label that floats up out of the way once
 // it's focused or filled, and a focus glow — replaces the plain
-// bordered `<input>` the page used to have.
-function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdornment }) {
+// bordered `<input>` the page used to have. `error` tints the border
+// and icon to flag exactly which field a validation problem is about,
+// instead of only a generic message below the form.
+function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdornment, error }) {
   const [focused, setFocused] = useState(false)
   // The browser doesn't fire onChange when it autofills a field, so
   // `value` alone can't be trusted to know the label should float up —
@@ -83,6 +85,7 @@ function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdo
   // below (`.auth-input:-webkit-autofill` triggers `onAutoFillStart`).
   const [autofilled, setAutofilled] = useState(false)
   const active = focused || autofilled || value.length > 0
+  const borderColor = error ? 'var(--critical)' : focused ? 'var(--text-1)' : 'var(--border-strong)'
 
   return (
     <div style={{
@@ -91,13 +94,13 @@ function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdo
       alignItems: 'center',
       gap: '10px',
       background: 'var(--surface-white)',
-      border: `1.5px solid ${focused ? 'var(--text-1)' : 'var(--border-strong)'}`,
+      border: `1.5px solid ${borderColor}`,
       borderRadius: '10px',
       padding: '0 13px',
       transition: 'border-color 180ms ease-out, box-shadow 180ms ease-out',
-      boxShadow: focused ? '0 0 0 4px rgba(33, 29, 23, 0.07)' : '0 0 0 0 rgba(33, 29, 23, 0)',
+      boxShadow: focused && !error ? '0 0 0 4px rgba(33, 29, 23, 0.07)' : '0 0 0 0 rgba(33, 29, 23, 0)',
     }}>
-      <Icon size={15} color={focused ? 'var(--text-1)' : 'var(--text-3)'} style={{ flex: 'none', transition: 'color 180ms ease-out' }} />
+      <Icon size={15} color={error ? 'var(--critical)' : focused ? 'var(--text-1)' : 'var(--text-3)'} style={{ flex: 'none', transition: 'color 180ms ease-out' }} />
 
       <div style={{ position: 'relative', flex: 1 }}>
         <label style={{
@@ -107,7 +110,7 @@ function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdo
           transform: active ? 'translateY(0) scale(0.76)' : 'translateY(-50%) scale(1)',
           transformOrigin: 'left center',
           fontSize: '13.5px',
-          color: focused ? 'var(--text-1)' : 'var(--text-3)',
+          color: error ? 'var(--critical)' : focused ? 'var(--text-1)' : 'var(--text-3)',
           pointerEvents: 'none',
           transition: 'top 180ms cubic-bezier(.2,.9,.3,1), transform 180ms cubic-bezier(.2,.9,.3,1), color 180ms ease-out',
         }}>
@@ -125,7 +128,6 @@ function AuthField({ icon: Icon, label, type, value, onChange, autoFocus, endAdo
             if (e.animationName === 'onAutoFillCancel') setAutofilled(false)
           }}
           autoFocus={autoFocus}
-          required
           style={{
             width: '100%',
             border: 'none',
@@ -149,9 +151,13 @@ function LoginPage({ onLogin }) {
   const [password, setPassword]         = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError]               = useState('')
+  // Which field(s) a validation problem belongs to — drives the red
+  // border/icon on the specific field instead of only a message below
+  // the form. 'username' | 'password' | 'both' | null.
+  const [errorField, setErrorField]     = useState(null)
   const [loading, setLoading]           = useState(false)
-  const [shakeKey, setShakeKey]         = useState(0)
   const navigate = useNavigate()
+  const cardRef = useRef(null)
 
   // Pulled from the public, unauthenticated status endpoint — real
   // numbers, not placeholders, animating in the moment they arrive.
@@ -174,10 +180,48 @@ function LoginPage({ onLogin }) {
   const facilityCountDisplay = Math.round(useCountUp(facilityCount, 900))
   const avgUptimeDisplay     = useCountUp(avgUptime, 900).toFixed(1)
 
+  function fail(message, field) {
+    setError(message)
+    setErrorField(field)
+
+    // Retriggers the CSS shake without remounting the form — this used
+    // to be a `key={shakeKey}` on the card, which forced React to tear
+    // down and recreate the <input> elements on every failed attempt.
+    // Brand-new password inputs are exactly the pattern that makes a
+    // browser autofill them again from saved credentials, which is why
+    // a failed attempt kept silently refilling the fields right after.
+    const el = cardRef.current
+    if (el) {
+      el.style.animation = 'none'
+      void el.offsetWidth // force reflow so the next line's animation restarts from scratch
+      el.style.animation = 'shake 0.3s ease-in-out'
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Validated here instead of via the <input required> attribute —
+    // that relied on the browser's own "Please fill out this field"
+    // popup, which looks out of place next to the rest of this form and
+    // can't be styled. This also catches both fields at once instead of
+    // stopping at whichever the browser happens to focus first.
+    const usernameMissing = username.trim().length === 0
+    const passwordMissing = password.length === 0
+    if (usernameMissing || passwordMissing) {
+      if (usernameMissing && passwordMissing) {
+        fail('Enter your username and password to continue.', 'both')
+      } else if (usernameMissing) {
+        fail('Enter your username to continue.', 'username')
+      } else {
+        fail('Enter your password to continue.', 'password')
+      }
+      return
+    }
+
     setLoading(true)
     setError('')
+    setErrorField(null)
 
     try {
       const response = await login(username, password)
@@ -186,8 +230,7 @@ function LoginPage({ onLogin }) {
       onLogin()
       navigate('/')
     } catch {
-      setError('Invalid username or password')
-      setShakeKey((k) => k + 1)
+      fail('Invalid username or password.', 'both')
     } finally {
       setLoading(false)
     }
@@ -309,12 +352,11 @@ function LoginPage({ onLogin }) {
         padding: '24px',
       }}>
         <div
-          key={shakeKey}
+          ref={cardRef}
           className="fade-in"
           style={{
             width: '100%',
             maxWidth: '380px',
-            animation: error ? 'shake 0.4s ease-in-out' : undefined,
           }}
         >
           <div style={{ marginBottom: '30px' }}>
@@ -333,15 +375,19 @@ function LoginPage({ onLogin }) {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div style={{ marginBottom: '14px' }}>
               <AuthField
                 icon={User}
                 label="Username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value)
+                  if (error) { setError(''); setErrorField(null) }
+                }}
                 autoFocus
+                error={errorField === 'username' || errorField === 'both'}
               />
             </div>
 
@@ -351,7 +397,11 @@ function LoginPage({ onLogin }) {
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (error) { setError(''); setErrorField(null) }
+                }}
+                error={errorField === 'password' || errorField === 'both'}
                 endAdornment={
                   <button
                     type="button"

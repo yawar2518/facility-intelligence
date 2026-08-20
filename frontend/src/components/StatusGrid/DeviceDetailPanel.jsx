@@ -1,5 +1,4 @@
 import { useDeviceDetail } from '../../hooks/useDeviceDetail'
-import ForecastChart from '../ForecastChart'
 
 function DeviceDetailPanel({ device, onClose }) {
   const { uptime, loading } = useDeviceDetail(device?.id)
@@ -289,25 +288,6 @@ function DeviceDetailPanel({ device, onClose }) {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Divider */}
-          {device.lane_id && <div style={{ height: '1px', background: 'var(--border-2)' }}/>}
-
-          {/* Forecast */}
-          {device.lane_id && (
-            <div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
-                letterSpacing: '0.14em',
-                color: 'var(--text-3)',
-                marginBottom: '12px',
-              }}>
-                TRAFFIC FORECAST
-              </div>
-              <ForecastChart laneId={device.lane_id} laneName={device.lane_name} />
             </div>
           )}
 

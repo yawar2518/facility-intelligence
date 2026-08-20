@@ -31,11 +31,39 @@ function formatTime(isoString) {
 }
 
 function formatDateTime(isoString) {
-  // Full date+time for feed rows and tooltips
+  // Full date+time — used for the chart tooltip, a standalone popup
+  // that isn't grouped under a date header the way feed rows are, so
+  // it needs to state the date itself.
   return new Date(isoString).toLocaleString([], {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
+}
+
+function formatRowTime(isoString) {
+  // Time-only for feed rows — the date is stated once per day by the
+  // group header above them (see formatDayLabel), not repeated on
+  // every row.
+  return new Date(isoString).toLocaleTimeString([], {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+}
+
+// Groups the feed under a date header wherever the calendar day
+// changes — the selected window can span multiple days, and this
+// keeps the whole thing as one continuous, scrollable list (matching
+// the traffic chart above it, which always covers the full window)
+// instead of hiding days behind a switcher.
+function formatDayLabel(isoString) {
+  const d = new Date(isoString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  if (sameDay(d, today)) return 'Today';
+  if (sameDay(d, yesterday)) return 'Yesterday';
+  return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 function severityColor(severity) {
@@ -137,9 +165,9 @@ function StatusChangeRow({ item, delay }) {
       <span style={{
         fontSize: '11px', color: 'var(--text-3)',
         fontFamily: 'JetBrains Mono, monospace',
-        minWidth: '150px', flexShrink: 0,
+        minWidth: '64px', flexShrink: 0,
       }}>
-        {formatDateTime(item.changed_at)}
+        {formatRowTime(item.changed_at)}
       </span>
 
       <span style={{
@@ -176,9 +204,9 @@ function AnomalyRow({ item, delay }) {
       <span style={{
         fontSize: '11px', color: 'var(--text-3)',
         fontFamily: 'JetBrains Mono, monospace',
-        minWidth: '150px', flexShrink: 0,
+        minWidth: '64px', flexShrink: 0,
       }}>
-        {formatDateTime(item.detected_at)}
+        {formatRowTime(item.detected_at)}
       </span>
 
       <AlertTriangle size={13} color={color} style={{ marginTop: '2px', flexShrink: 0 }} />
@@ -500,11 +528,33 @@ export default function PlaybackPage() {
                 </p>
               )}
 
-              {feedItems.map((item, i) =>
-                item._type === 'status'
-                  ? <StatusChangeRow key={i} item={item} delay={Math.min(i, 14) * 0.03} />
-                  : <AnomalyRow      key={i} item={item} delay={Math.min(i, 14) * 0.03} />
-              )}
+              {feedItems.map((item, i) => {
+                const dayLabel = formatDayLabel(item._time);
+                const isNewDay = i === 0 || dayLabel !== formatDayLabel(feedItems[i - 1]._time);
+
+                return (
+                  <div key={i}>
+                    {isNewDay && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '12px 20px',
+                        background: 'var(--surface-2)',
+                        borderBottom: '1px solid var(--border)',
+                      }}>
+                        <span style={{
+                          fontFamily: 'JetBrains Mono, monospace', fontSize: '10px',
+                          letterSpacing: '0.14em', color: 'var(--text-2)', flex: 'none',
+                        }}>
+                          {dayLabel.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    {item._type === 'status'
+                      ? <StatusChangeRow item={item} delay={Math.min(i, 14) * 0.03} />
+                      : <AnomalyRow      item={item} delay={Math.min(i, 14) * 0.03} />}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

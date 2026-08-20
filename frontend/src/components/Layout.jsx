@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { LiveUpdatesProvider, useLiveUpdates } from '../hooks/useLiveUpdates'
 import GlobalToasts from './GlobalToasts'
@@ -445,10 +446,13 @@ function Layout() {
             }}>
               {user.username?.charAt(0).toUpperCase() || 'A'}
             </div>
-            <div>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{
                 fontSize: '11.5px',
                 fontWeight: 500,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}>
                 {user.username || 'A. Rehman'}
               </div>
@@ -456,10 +460,44 @@ function Layout() {
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: '9px',
                 color: 'var(--text-4)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}>
                 {roleLabel} · {facilityText}
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sign out"
+              aria-label="Sign out"
+              style={{
+                flex: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '26px',
+                height: '26px',
+                background: 'none',
+                border: 'none',
+                borderRadius: '6px',
+                color: 'var(--text-4)',
+                cursor: 'pointer',
+                transition: 'background 150ms ease-out, color 150ms ease-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(204, 59, 48, 0.1)'
+                e.currentTarget.style.color = 'var(--critical)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none'
+                e.currentTarget.style.color = 'var(--text-4)'
+              }}
+            >
+              <LogOut size={14} />
+            </button>
           </div>
         )}
       </aside>

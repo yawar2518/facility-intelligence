@@ -5,6 +5,7 @@ Environment-specific overrides go in local.py / production.py
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 import environ
 
@@ -178,6 +179,26 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+}
+
+# ============================================================
+# SIMPLE JWT
+# ============================================================
+# Made explicit rather than relying on simplejwt's library defaults
+# (a 5-minute access token, no rotation) — that lifetime was so short
+# that ordinary use of the dashboard hit it constantly, and since the
+# frontend didn't yet use the refresh token to renew silently, every
+# expiry bounced the user straight back to the login screen mid-session.
+# The frontend now does refresh silently on a 401 (see api/client.js),
+# so this is mainly about not making that happen every few minutes.
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    # Deliberately not rotating refresh tokens: rotation needs the
+    # `token_blacklist` app (to invalidate the old one), which isn't
+    # installed here, and turning ROTATE_REFRESH_TOKENS on without it
+    # would break the refresh flow this is meant to fix. The refresh
+    # token is long-lived and reused as-is instead.
 }
 
 # ============================================================

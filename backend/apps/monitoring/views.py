@@ -183,8 +183,26 @@ class FacilityStatusChangesView(APIView):
         except Facility.DoesNotExist:
             return Response({'error': 'Facility not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        limit   = max(1, min(int(request.query_params.get('limit', 50)), 200))
-        changes = DeviceStatusChange.objects.filter(facility=facility).select_related('device', 'lane', 'area').order_by('-changed_at')[:limit]
+        try:
+            limit = max(1, min(int(request.query_params.get('limit', 50)), 200))
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = max(0, int(request.query_params.get('offset', 0)))
+        except (TypeError, ValueError):
+            offset = 0
+
+        qs = (
+            DeviceStatusChange.objects
+            .filter(facility=facility)
+            .select_related('device', 'lane', 'area')
+            .order_by('-changed_at')
+        )
+        # Fetch one extra row past the page to know whether there's a
+        # next page without a separate .count() query, then trim it off.
+        page = list(qs[offset:offset + limit + 1])
+        has_more = len(page) > limit
+        page = page[:limit]
 
         data = [{
             'id': str(c.id), 'device_code': c.device.code,
@@ -193,12 +211,14 @@ class FacilityStatusChangesView(APIView):
             'previous_status': c.previous_status, 'new_status': c.new_status,
             'reason': c.reason, 'changed_at': c.changed_at,
             'duration_seconds': c.duration_seconds, 'metadata': c.metadata,
-        } for c in changes]
+        } for c in page]
 
         return Response({
             'facility_id': str(facility.id),
             'facility_code': facility.code,
-            'count': len(data), 'changes': data,
+            'count': len(data),
+            'has_more': has_more,
+            'changes': data,
         })
 
 

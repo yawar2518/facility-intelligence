@@ -41,7 +41,18 @@ function UptimeBar({ pct, delay }) {
   );
 }
 
-function MetricCard({ label, value, suffix, color, delay }) {
+// A shimmering placeholder block — the same skeletonPulse animation
+// used across the rest of the app in place of bare "Loading..." text.
+function Skeleton({ width, height = '1em', style }) {
+  return (
+    <span
+      className="skeleton"
+      style={{ display: 'inline-block', width, height, ...style }}
+    />
+  );
+}
+
+function MetricCard({ label, value, suffix, color, delay, loading }) {
   return (
     <div className="slide-up" style={{
       background: 'var(--surface)',
@@ -60,15 +71,56 @@ function MetricCard({ label, value, suffix, color, delay }) {
       }}>
         {label}
       </div>
-      <div style={{
-        fontFamily: 'Archivo, sans-serif',
-        fontWeight: 900,
-        fontSize: '34px',
-        lineHeight: 1,
-        color,
-      }}>
-        {value}{suffix && <span style={{ fontSize: '20px' }}>{suffix}</span>}
+      {loading ? (
+        <Skeleton width="64px" height="30px" />
+      ) : (
+        <div style={{
+          fontFamily: 'Archivo, sans-serif',
+          fontWeight: 900,
+          fontSize: '34px',
+          lineHeight: 1,
+          color,
+        }}>
+          {value}{suffix && <span style={{ fontSize: '20px' }}>{suffix}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Mirrors one leaderboard row — same GRID_COLUMNS template so it lines
+// up exactly under the real column headers.
+function SkeletonRankRow({ delay, isLast }) {
+  return (
+    <div
+      className="fade-in"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: GRID_COLUMNS,
+        gap: '16px',
+        padding: '17px 22px',
+        borderBottom: isLast ? 'none' : '1px solid var(--border-2)',
+        alignItems: 'center',
+        animationDelay: `${delay}s`,
+      }}
+    >
+      <Skeleton width="22px" height="16px" />
+
+      <div>
+        <Skeleton width="120px" height="14.5px" style={{ marginBottom: '6px' }} />
+        <Skeleton width="46px" height="10.5px" />
       </div>
+
+      <Skeleton width="80px" height="12px" />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+        <Skeleton width="100%" height="6px" style={{ borderRadius: '3px' }} />
+        <Skeleton width="30px" height="11.5px" style={{ flex: 'none' }} />
+      </div>
+
+      <Skeleton width="24px" height="12.5px" style={{ marginLeft: 'auto' }} />
+      <Skeleton width="24px" height="12.5px" style={{ marginLeft: 'auto' }} />
+      <Skeleton width="18px" height="12.5px" style={{ marginLeft: 'auto' }} />
     </div>
   );
 }
@@ -149,25 +201,25 @@ export default function SLADashboardPage() {
           </p>
         </div>
 
-        {loading && (
-          <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>Loading...</p>
-        )}
-
         {error && (
           <p style={{ fontSize: '13px', color: 'var(--critical)' }}>Error: {error}</p>
         )}
 
-        {!loading && !error && (
+        {!error && (
           <>
-            {/* Summary metric cards */}
+            {/* Summary metric cards — the card shell renders immediately;
+                only the number inside shimmers while it loads, so the
+                page's structure never goes blank. */}
             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <MetricCard label="AVG UPTIME"         value={avgUptimeCount.toFixed(1)} suffix="%" color="var(--online)"   delay={0} />
-              <MetricCard label="TOTAL ANOMALIES"    value={Math.round(anomaliesCount)}               color="var(--degraded-dark)" delay={0.06} />
-              <MetricCard label="CRITICAL ANOMALIES" value={Math.round(criticalCount)}                color="var(--critical)" delay={0.12} />
-              <MetricCard label="TOTAL INCIDENTS"    value={Math.round(incidentsCount)}               color="var(--text-1)"  delay={0.18} />
+              <MetricCard label="AVG UPTIME"         value={avgUptimeCount.toFixed(1)} suffix="%" color="var(--online)"   delay={0}    loading={loading} />
+              <MetricCard label="TOTAL ANOMALIES"    value={Math.round(anomaliesCount)}               color="var(--degraded-dark)" delay={0.06} loading={loading} />
+              <MetricCard label="CRITICAL ANOMALIES" value={Math.round(criticalCount)}                color="var(--critical)" delay={0.12} loading={loading} />
+              <MetricCard label="TOTAL INCIDENTS"    value={Math.round(incidentsCount)}               color="var(--text-1)"  delay={0.18} loading={loading} />
             </div>
 
-            {/* Facility leaderboard */}
+            {/* Facility leaderboard — same shell (dark header + column
+                labels) is static chrome, not data, so it renders right
+                away too; only the rows underneath shimmer. */}
             <div style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
@@ -208,13 +260,17 @@ export default function SLADashboardPage() {
                 <span style={{ textAlign: 'right' }}>CRITICAL</span>
               </div>
 
-              {ranked.length === 0 && (
+              {loading && [0, 1, 2].map((i) => (
+                <SkeletonRankRow key={i} delay={i * 0.06} isLast={i === 2} />
+              ))}
+
+              {!loading && ranked.length === 0 && (
                 <p style={{ padding: '24px 22px', fontSize: '13px', color: 'var(--text-3)', textAlign: 'center' }}>
                   No facilities found.
                 </p>
               )}
 
-              {ranked.map((f, i) => {
+              {!loading && ranked.map((f, i) => {
                 const rank = i + 1;
                 return (
                   <div

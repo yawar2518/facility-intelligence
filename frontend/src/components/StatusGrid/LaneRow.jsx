@@ -1,6 +1,7 @@
+import { TrendingUp } from 'lucide-react'
 import DeviceTile from './DeviceTile'
 
-function LaneRow({ lane, areaName, onDeviceClick, isLast }) {
+function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
 
   const laneTypeBadge = {
     ENTRY:      { bg: 'rgba(31, 158, 122, 0.1)', color: 'var(--online)' },
@@ -48,6 +49,45 @@ function LaneRow({ lane, areaName, onDeviceClick, isLast }) {
         }}>
           {lane.lane_type}
         </span>
+
+        {/* Forecast is per-lane, not per-device — one trigger here
+            instead of the same chart repeated inside every device tile
+            below. */}
+        {onForecastClick && (
+          <button
+            type="button"
+            onClick={() => onForecastClick({ id: lane.id, name: lane.name, code: lane.code, area_name: areaName })}
+            title="View traffic forecast"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              marginLeft: 'auto',
+              background: 'none',
+              border: '1px solid var(--border-2)',
+              borderRadius: '5px',
+              padding: '3px 7px',
+              cursor: 'pointer',
+              color: 'var(--text-3)',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '9.5px',
+              transition: 'all 150ms ease-out',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--accent)'
+              e.currentTarget.style.borderColor = 'var(--accent)'
+              e.currentTarget.style.background = 'rgba(191, 90, 47, 0.08)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--text-3)'
+              e.currentTarget.style.borderColor = 'var(--border-2)'
+              e.currentTarget.style.background = 'none'
+            }}
+          >
+            <TrendingUp size={11} />
+            Forecast
+          </button>
+        )}
       </div>
 
       {/* Device grid */}

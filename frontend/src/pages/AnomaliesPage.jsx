@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import useAnomalies from '../hooks/useAnomalies'
 import { useLiveEventListener } from '../hooks/useLiveUpdates'
+import Dropdown from '../components/Dropdown'
 
-const SEVERITY_OPTIONS = ['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+const SEVERITY_OPTIONS = [
+  { value: '',         label: 'All severities' },
+  { value: 'CRITICAL', label: 'CRITICAL'       },
+  { value: 'HIGH',      label: 'HIGH'          },
+  { value: 'MEDIUM',    label: 'MEDIUM'        },
+  { value: 'LOW',       label: 'LOW'           },
+]
 const TYPE_OPTIONS = [
   { value: '',                label: 'All types'         },
   { value: 'TRAFFIC_SPIKE',   label: 'Traffic Spike'   },
@@ -249,46 +256,19 @@ export default function AnomaliesPage() {
           marginBottom: '18px',
           flexWrap: 'wrap',
         }}>
-          <select
+          <Dropdown
             value={severity}
-            onChange={e => setSeverity(e.target.value)}
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '7px',
-              padding: '7px 11px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              outline: 'none',
-              fontFamily: 'JetBrains Mono, monospace',
-              color: 'var(--text-1)',
-            }}
-          >
-            <option value="">All severities</option>
-            {SEVERITY_OPTIONS.filter(s => s).map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={setSeverity}
+            options={SEVERITY_OPTIONS}
+            width="160px"
+          />
 
-          <select
+          <Dropdown
             value={anomalyType}
-            onChange={e => setAnomalyType(e.target.value)}
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '7px',
-              padding: '7px 11px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              outline: 'none',
-              fontFamily: 'JetBrains Mono, monospace',
-              color: 'var(--text-1)',
-            }}
-          >
-            {TYPE_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            onChange={setAnomalyType}
+            options={TYPE_OPTIONS}
+            width="170px"
+          />
 
           <label style={{
             display: 'flex',

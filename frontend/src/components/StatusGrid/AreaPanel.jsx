@@ -1,7 +1,7 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import LaneRow from './LaneRow'
 
-function AreaPanel({ area, onDeviceClick }) {
+function AreaPanel({ area, onDeviceClick, onForecastClick }) {
   const [isOpen, setIsOpen] = useState(true)
   const contentRef = useRef(null)
   const [contentHeight, setContentHeight] = useState(0)
@@ -126,6 +126,7 @@ function AreaPanel({ area, onDeviceClick }) {
               lane={lane}
               areaName={area.name}
               onDeviceClick={onDeviceClick}
+              onForecastClick={onForecastClick}
               isLast={i === area.lanes.length - 1}
             />
           ))}

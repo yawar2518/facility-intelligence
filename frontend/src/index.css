@@ -54,6 +54,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-size: 13px;
   line-height: 1.5;
+  /* This is a dashboard, not a document — labels, buttons, table cells,
+     stat numbers etc. shouldn't turn into an I-beam text cursor and
+     highlight on a click/drag the way document text does. Form fields
+     (input/textarea) are unaffected by user-select and stay editable
+     and selectable as normal. */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
 }
 
 a {
@@ -206,10 +222,8 @@ a {
 }
 
 @keyframes shake {
-  10%, 90% { transform: translateX(-1px); }
-  20%, 80% { transform: translateX(2px); }
-  30%, 50%, 70% { transform: translateX(-4px); }
-  40%, 60% { transform: translateX(4px); }
+  20%, 60% { transform: translateX(-2px); }
+  40%, 80% { transform: translateX(2px); }
 }
 
 /* Utility classes */

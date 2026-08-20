@@ -5,6 +5,117 @@ import { useFacilityDeviceTree } from '../hooks/useFacilityDeviceTree'
 import { useLiveEventListener } from '../hooks/useLiveUpdates'
 import AreaPanel from '../components/StatusGrid/AreaPanel'
 import DeviceDetailPanel from '../components/StatusGrid/DeviceDetailPanel'
+import LaneForecastPanel from '../components/StatusGrid/LaneForecastPanel'
+import Dropdown from '../components/Dropdown'
+
+// A shimmering placeholder block — the same skeletonPulse animation
+// used across the rest of the app in place of bare "Loading..." text.
+function Skeleton({ width, height = '1em', style }) {
+  return (
+    <span
+      className="skeleton"
+      style={{ display: 'inline-block', width, height, ...style }}
+    />
+  )
+}
+
+// Mirrors DeviceTile's exact layout so the real grid doesn't jump in
+// size once it replaces this.
+function SkeletonDeviceTile() {
+  return (
+    <div style={{
+      width: '158px',
+      background: 'var(--surface-white)',
+      border: '1px solid rgba(33, 29, 23, 0.1)',
+      borderLeft: '3px solid var(--border-strong)',
+      borderRadius: '8px',
+      padding: '11px 12px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <Skeleton width="52px" height="12px" />
+        <Skeleton width="7px" height="7px" style={{ borderRadius: '50%' }} />
+      </div>
+      <Skeleton width="72px" height="10.5px" style={{ marginBottom: '7px' }} />
+      <Skeleton width="50px" height="11px" />
+    </div>
+  )
+}
+
+function SkeletonLaneRow({ tileCount, isLast }) {
+  return (
+    <div style={{ marginBottom: isLast ? 0 : '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '9px' }}>
+        <Skeleton width="40px" height="10px" />
+        <Skeleton width="92px" height="12.5px" />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        {Array.from({ length: tileCount }, (_, i) => <SkeletonDeviceTile key={i} />)}
+      </div>
+    </div>
+  )
+}
+
+// Mirrors AreaPanel's header + lane layout.
+function SkeletonAreaPanel({ delay, lanes }) {
+  return (
+    <div className="fade-in" style={{
+      border: '1px solid var(--border)',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      marginBottom: '14px',
+      background: 'var(--surface)',
+      animationDelay: `${delay}s`,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '15px 20px', borderBottom: '1px solid var(--border-2)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Skeleton width="11px" height="11px" />
+          <div>
+            <Skeleton width="120px" height="15px" style={{ marginBottom: '7px' }} />
+            <Skeleton width="94px" height="10px" />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Skeleton width="34px" height="14px" />
+          <Skeleton width="50px" height="10px" />
+        </div>
+      </div>
+      <div style={{ padding: '16px 20px 20px' }}>
+        {lanes.map((tileCount, i) => (
+          <SkeletonLaneRow key={i} tileCount={tileCount} isLast={i === lanes.length - 1} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Mirrors the Facility Summary Bar.
+function SkeletonSummaryBar() {
+  return (
+    <div className="fade-in" style={{
+      display: 'flex', alignItems: 'center', gap: '22px',
+      background: 'var(--surface)', border: '1px solid var(--border)',
+      borderRadius: '10px', padding: '16px 20px', marginBottom: '22px',
+    }}>
+      <div>
+        <Skeleton width="150px" height="18px" style={{ marginBottom: '7px' }} />
+        <Skeleton width="190px" height="10px" />
+      </div>
+      <div style={{ width: '1px', height: '34px', background: 'var(--border)' }} />
+      <div>
+        <Skeleton width="46px" height="20px" style={{ marginBottom: '5px' }} />
+        <Skeleton width="36px" height="10px" />
+      </div>
+      <div style={{ display: 'flex', gap: '20px', marginLeft: 'auto' }}>
+        <Skeleton width="66px" height="12px" />
+        <Skeleton width="66px" height="12px" />
+        <Skeleton width="90px" height="12px" />
+      </div>
+    </div>
+  )
+}
 
 function StatusGridPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -13,6 +124,10 @@ function StatusGridPage() {
   )
   const [currentTime, setCurrentTime] = useState(new Date())
   const [selectedDevice, setSelectedDevice] = useState(null)
+  // Which lane's forecast panel is open — a forecast is per-lane, not
+  // per-device, so it's a separate selection from selectedDevice above
+  // rather than something shown inside every device in the lane.
+  const [selectedLaneForecast, setSelectedLaneForecast] = useState(null)
 
   const { facilities, loading: facilitiesLoading } = useFacilities()
   const { tree, setTree, loading: treeLoading, error } = useFacilityDeviceTree(selectedFacilityId)
@@ -62,8 +177,7 @@ function StatusGridPage() {
     })
   }, [selectedFacilityId, setTree]))
 
-  const handleFacilityChange = (e) => {
-    const facilityId = e.target.value
+  const handleFacilityChange = (facilityId) => {
     setSelectedFacilityId(facilityId)
     setSearchParams({ facility: facilityId })
     setSelectedDevice(null)
@@ -72,8 +186,6 @@ function StatusGridPage() {
   const formatTime = (d) => {
     return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   }
-
-  const selectedFacility = facilities.find(f => f.id === selectedFacilityId)
 
   // Derived live from tree.areas on every render — not read from the tree's
   // top-level online/offline/degraded/health_score fields, which are only
@@ -113,44 +225,23 @@ function StatusGridPage() {
           gap: '14px',
         }}>
           {/* Facility Selector */}
-          <span style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '12px',
-            background: 'var(--surface)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: '7px',
-            padding: '6px 12px',
-            cursor: 'pointer',
-            position: 'relative',
-          }}>
-            {facilitiesLoading ? (
-              'Loading...'
-            ) : (
-              <>
-                <select
-                  value={selectedFacilityId || ''}
-                  onChange={handleFacilityChange}
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {facilities.map(f => (
-                    <option key={f.id} value={f.id}>
-                      {f.name} · {f.code}
-                    </option>
-                  ))}
-                </select>
-                {selectedFacility?.name || 'Select Facility'} · {selectedFacility?.code || ''}
-                <span style={{ color: 'var(--accent)' }}>▾</span>
-              </>
-            )}
-          </span>
+          {facilitiesLoading ? (
+            <span style={{
+              display: 'flex', alignItems: 'center',
+              background: 'var(--surface)', border: '1px solid var(--border-strong)',
+              borderRadius: '7px', padding: '7px 12px',
+            }}>
+              <Skeleton width="140px" height="13px" />
+            </span>
+          ) : (
+            <Dropdown
+              value={selectedFacilityId || ''}
+              onChange={handleFacilityChange}
+              options={facilities.map(f => ({ value: f.id, label: `${f.name} · ${f.code}` }))}
+              placeholder="Select Facility"
+              width="220px"
+            />
+          )}
 
           <span style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -183,16 +274,15 @@ function StatusGridPage() {
           </div>
         )}
 
-        {/* Loading */}
+        {/* Loading — mirrors the real summary bar + area panels below
+            instead of a bare centered "Loading..." string, so the page
+            never goes blank while the tree fetches. */}
         {treeLoading && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '400px',
-          }}>
-            <p style={{ fontSize: '13px', color: 'var(--text-3)' }}>Loading...</p>
-          </div>
+          <>
+            <SkeletonSummaryBar />
+            <SkeletonAreaPanel delay={0}    lanes={[4, 3]} />
+            <SkeletonAreaPanel delay={0.08} lanes={[3]} />
+          </>
         )}
 
         {/* Error */}
@@ -331,6 +421,7 @@ function StatusGridPage() {
                 <AreaPanel
                   area={area}
                   onDeviceClick={setSelectedDevice}
+                  onForecastClick={setSelectedLaneForecast}
                 />
               </div>
             ))}
@@ -343,6 +434,16 @@ function StatusGridPage() {
         <DeviceDetailPanel
           device={selectedDevice}
           onClose={() => setSelectedDevice(null)}
+        />
+      )}
+
+      {/* Lane Forecast Panel — one per lane, opened from the lane
+          header, instead of duplicating the same chart inside every
+          device in that lane. */}
+      {selectedLaneForecast && (
+        <LaneForecastPanel
+          lane={selectedLaneForecast}
+          onClose={() => setSelectedLaneForecast(null)}
         />
       )}
 
