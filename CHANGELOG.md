@@ -4,15 +4,147 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.0.0] - 2026-08-20
 
-### Planned
-- Anomaly detection — z-score baseline + IsolationForest
-- Prophet forecasting — per-lane traffic predictions
-- Anomaly API endpoints with explainability payloads
-- Frontend anomaly timeline and forecast chart
-- Configurable alert rules engine
-- SendGrid email alerts + Slack webhook
+### Week 4 — Alerts, ML Enhancements, Operations & Frontend Redesign
+
+#### Added — Alerts Pipeline
+- `AlertRule` model — configurable per facility, min severity, anomaly type filter, cooldown
+- `AlertRecipient` model — email or Slack channel, digest subscription flag
+- `AlertLog` model — delivery record per send attempt with SENT/FAILED status
+- `evaluate_alert_rules` Celery task — runs at `:15` every hour, 70-minute lookback window
+- `send_alert_email` task — Gmail SMTP delivery with full anomaly context
+- Slack Block Kit webhook integration — header, severity, facility, sigma score fields
+- `send_daily_digest` task — runs 8:00 AM UTC, 24h anomaly breakdown per recipient
+- Alert cooldown enforcement — FAILED logs excluded from cooldown calculation
+- Alert log API at `GET /api/v1/alert-logs/` with CSV export support
+- `AlertLogsPage.jsx` with status filter and 60s auto-refresh
+
+#### Added — Predictive Maintenance Scoring
+- `MaintenanceScore` model — risk score (0–1), risk level, explanation, computed_at
+- `compute_maintenance_scores` Celery task — daily at 3:00 AM UTC
+- Scoring features: cycle rate, error rate, total cycles (7-day heartbeat history)
+- Weighted scoring: 40% cycle rate + 40% error rate + 20% total cycles
+- Thresholds: cycle_rate>5, error_rate>0.1, total_cycles>10000 → HIGH
+- `MaintenancePage.jsx` with risk filter and progress bar visualization
+
+#### Added — CSV Export
+- `CSVRenderer` in `apps/core/renderers.py` — reusable DRF BaseRenderer
+- Handles paginated responses, flattens nested dicts, handles None values
+- Added to AnomalyViewSet, ForecastViewSet, AlertLogViewSet, MaintenanceScoreViewSet
+- `CsvExportButton.jsx` reusable component with auth header and browser download trigger
+- Export buttons on Anomalies, Alert Logs, and Maintenance pages
+
+#### Added — Facility SLA Dashboard
+- `FacilitySLAView` at `/api/v1/monitoring/facilities/sla/`
+- Aggregates uptime %, incident count (OFFLINE transitions), anomaly count per facility
+- Covers last 7 days, sorted by uptime descending then anomaly count ascending
+- `SLADashboardPage.jsx` with 4 summary metric cards and facility leaderboard table
+
+#### Added — Role-Based Multi-Tenant Access
+- `UserProfile` model — role (ADMIN/REGIONAL_MANAGER/FACILITY_OWNER), ManyToMany facilities
+- `check_facility_access()` helper for URL-param views
+- `get_accessible_facilities()` for queryset filtering
+- Inline role-based filtering on all ViewSets via `get_queryset()` override
+- `/api/v1/auth/me/` endpoint returning username, email, role, accessible facilities
+- `UserProvider` + `useCurrentUser` React context
+- Sidebar shows username, role label, and facility codes for non-admin users
+- Test users: `dg_owner` (FACILITY_OWNER), `regional_manager` (REGIONAL_MANAGER), `argus_admin` (ADMIN)
+
+#### Added — Historical Playback
+- `FacilityPlaybackView` at `/api/v1/monitoring/facilities/{id}/playback/`
+- Returns unified traffic buckets (TimescaleDB `time_bucket()`), device status changes, and anomalies
+- Configurable `bucket_minutes` param (default 5, max 60)
+- Default window: last 24 hours
+- Role-based access enforced via `check_facility_access()`
+- `PlaybackPage.jsx` with facility selector, datetime range inputs, Recharts AreaChart
+- Anomaly reference lines overlaid on traffic chart by severity color
+- Interleaved event feed (status changes + anomalies sorted by time)
+
+#### Added — Public Status Page
+- `PublicStatusView` at `/status/` — no authentication required
+- Customer-facing language: Available / Limited / Unavailable per area
+- Availability thresholds: >70% online = Available, 40–70% = Limited, <40% = Unavailable
+- Customer notices from TRAFFIC_SPIKE and TRAFFIC_DROP anomalies only
+- One notice per area — worst severity wins (disruption beats congestion)
+- Device internals never exposed publicly
+- 60-second Redis cache via `cache_page` decorator
+- Auto-refresh `<meta>` tag every 60 seconds
+- `CACHES` Redis config added to `base.py`
+
+#### Added — Automated Test Suite
+- 26 tests across 5 classes in `backend/apps/tests.py`
+- `UptimeCalculationTest` — 5 tests for accuracy, duration capping, return shape
+- `FacilityAccessTest` — 5 tests for all three roles + superuser + no-profile user
+- `AlertCooldownTest` — 4 tests for no-log, within cooldown, expired cooldown, FAILED exclusion
+- `PublicStatusPageTest` — 6 tests for availability thresholds and unauthenticated access
+- `PlaybackAPITest` — 6 tests for 401/403/404 enforcement and response shape
+- All 26 tests passing
+
+#### Added — Frontend Redesign
+- Complete visual redesign based on Claude Design mockups
+- New design system: warm sand theme replacing dark monochrome
+  - Background #F0EBE3, Surface #F7F4EF, Text #1A1A1A, Muted #8A8070
+  - Online #2D7A5F, Degraded #C4842A, Offline #C13B3B
+- Grouped sidebar navigation: MONITOR / DETECT / PREDICT / REPLAY
+- Smooth page fade-in transitions on route change
+- Skeleton loaders replacing empty/zero states during data fetch
+- Animated status dots: online pulse, degraded slow pulse, offline static
+- Staggered card entrance animations on facility cards and list rows
+- Live toast notifications for WebSocket device status change events
+- Number counter animations on key overview metrics
+- All 9 pages redesigned and data-wired
+
+#### Fixed
+- Prophet forecast chart blank — `forecast_for__gte=now()` filter excluded all stale records
+  - Confirmed Celery Beat regenerates forecasts nightly at 2:30 AM UTC
+- `check_facility_access()` returns True for users with no UserProfile (documented known issue)
+- IsolationForest contamination reduced from 0.05 to 0.02 to prevent over-flagging
+- DOW convention mismatch: PostgreSQL DOW Sunday=0 vs Python weekday Monday=0
+  - Fixed via `(py_dow + 1) % 7` conversion
+
+---
+
+## [0.3.0] - 2026-08-14
+
+### Week 3 — Anomaly Detection, Forecasting & ML Pipeline
+
+#### Added — Z-Score Anomaly Detection
+- `Anomaly` model — anomaly_type, severity, observed/baseline/std_dev values, sigma_score, explanation
+- `detect_traffic_anomalies` Celery task — runs at `:05` every hour
+- 56-day baseline per lane × DOW × hour using `hourly_lane_traffic` continuous aggregate
+- Severity thresholds: |σ| ≥ 2.0 LOW, ≥ 3.0 MEDIUM, ≥ 4.0 HIGH, ≥ 5.0 CRITICAL
+- TRAFFIC_SPIKE and TRAFFIC_DROP anomaly types
+- Human-readable explanation: "Monday 08:00–09:00 volume was 3.2σ below baseline"
+- DOW convention fix: `(py_dow + 1) % 7` for PostgreSQL/Python alignment
+
+#### Added — IsolationForest Multivariate Detection
+- `detect_isolation_forest_anomalies` Celery task — runs at `:10` every hour
+- Features: vehicle event count, heartbeat count, error rate, timestamp cyclical encoding
+- joblib model persistence at `backend/ml_models/isolation_forest.pkl`
+- contamination=0.02 after tuning (reduced from 0.05 to prevent over-flagging)
+- Separate anomaly type: ISOLATION_FOREST
+
+#### Added — Prophet Forecasting
+- `Forecast` model — predicted, predicted_low, predicted_high per lane per hour
+- `train_and_forecast` Celery task — daily at 2:30 AM UTC
+- Per-lane Prophet model training on 56-day vehicle event history
+- 24-hour ahead forecasting with confidence band (yhat_lower/yhat_upper)
+- `ForecastViewSet` at `/api/v1/ml/forecasts/` with lane filter
+- `ForecastChart.jsx` — Recharts AreaChart with confidence band shading
+
+#### Added — Anomaly API + Frontend
+- `AnomalyViewSet` at `/api/v1/ml/anomalies/` with severity and type filters
+- Acknowledge endpoint — PATCH `is_acknowledged=True` with timestamp
+- `AnomaliesPage.jsx` with severity filter, type filter, acknowledge button
+- `useAnomalies` hook with 60s auto-refresh
+
+#### Fixed
+- Baseline data poisoning — test spike events sharing timestamp window corrupted baselines
+- IsolationForest over-flagging — backfilled zero error codes made live fault rate anomalous
+- Prophet stale forecasts — `forecast_for__gte` filter made old records invisible after daily run
+
+---
 
 ## [0.2.0] - 2026-08-10
 
@@ -38,96 +170,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 #### Added — Day 2: Health Rules Engine + Monitoring API
 - `apps/monitoring/health_rules.py` — per-device-type health evaluators
-  - Barrier Gate: DEGRADED on active error codes or gate cycle time > 4000ms
-  - LPR Camera: DEGRADED if plate read success < 85% or FPS < 20
-  - Kiosk: DEGRADED if transaction success rate < 95%
-  - Intercom: DEGRADED if call connect success rate < 90%
-  - Ticket Dispenser / Sensor: ONLINE as long as heartbeating
-- Health rules wired into `_process_single_device` — evaluates latest heartbeat metrics on every check
-- ONLINE → DEGRADED → ONLINE full cycle verified end-to-end with simulator
-- `apps/monitoring/uptime.py` — calculates uptime % from DeviceStatusChange history
-  - Returns uptime_pct, online_seconds, offline_seconds, degraded_seconds over configurable window
-- Five monitoring REST API endpoints (`apps/monitoring/views.py` + `urls.py`):
-  - `GET /api/v1/monitoring/facilities/{id}/health/` — facility health score and device counts
-  - `GET /api/v1/monitoring/facilities/{id}/devices/` — full Facility → Area → Lane → Device tree
-  - `GET /api/v1/monitoring/facilities/{id}/status-changes/` — chronological status change feed
-  - `GET /api/v1/monitoring/areas/{id}/health/` — area-level health rollup
-  - `GET /api/v1/monitoring/devices/{id}/uptime/` — uptime % with online/offline/degraded breakdown
-- All endpoints verified via PowerShell Invoke-RestMethod
+- Five monitoring REST API endpoints
+- Uptime calculation engine (`apps/monitoring/uptime.py`)
 
 #### Added — Day 3: React Dashboard Foundation
 - React 18 + Vite + Tailwind v4 project initialized in `frontend/`
-- Vite proxy configured to forward `/api` to Django — no CORS issues in development
-- Axios API client with JWT interceptors (`src/api/client.js`)
-  - Auto-attaches Bearer token on every request
-  - Redirects to `/login` on 401 response
-- All monitoring API functions in `src/api/monitoring.js`
-- Protected routing with React Router — unauthenticated users redirected to login
-- JWT login page with error handling
-- Dark-themed layout with sidebar navigation (`src/components/Layout.jsx`)
-- `useFacilities` hook — fetches facility list with parallel health data
-- `FacilityCard` component — health score, progress bar, device count breakdown
-- Overview page with live facility health cards pulling real API data
-- Status Grid page:
-  - `useFacilityDeviceTree` hook — refetches on facility selection change
-  - `FacilitySelector` dropdown component
-  - `AreaPanel` — collapsible area sections with live health score
-  - `LaneRow` — lane name, type badge, device grid
-  - `DeviceTile` — status left-border accent, monospace code, status dot
-- Event Timeline page:
-  - `useFacilityStatusChanges` hook
-  - `StatusChangeRow` — timestamp, device, transition badges, reason, error codes, duration
-- Area health score computed dynamically from live device statuses (not stale API data)
+- Axios API client with JWT interceptors
+- Protected routing with React Router
+- Overview, Status Grid, and Timeline pages
 
 #### Added — Day 4: Django Channels WebSocket + Device Detail Panel
-- `apps/monitoring/consumers.py` — `FacilityStatusConsumer` AsyncWebsocketConsumer
-  - Joins facility-specific channel group on connect
-  - Forwards `device_status_update` events to browser as JSON
-- `apps/monitoring/routing.py` — WebSocket URL pattern `ws/facility/{facility_id}/`
-- `config/asgi.py` — ProtocolTypeRouter with HTTP + AuthMiddlewareStack WebSocket routing
-- Celery task broadcasts status changes via `channel_layer.group_send()` after every transition
-- `async_to_sync` bridge for calling async channel layer from synchronous Celery task
-- Broadcast wrapped in try/except — WebSocket failure never breaks monitoring task
-- `useDeviceDetail` hook — fetches 7-day uptime data, auto-refreshes every 60 seconds
-- `DeviceDetailPanel` — slides from right on device tile click
-  - Current status with last heartbeat time ago
-  - Device type and timeout info
-  - Uptime percentage with progress bar
-  - Online/offline/degraded duration breakdown
-- WebSocket live updates wired into StatusGridPage
-  - Device tile colors update instantly on status change without page refresh
-  - Side panel status updates in real time from WebSocket messages
-  - Area health score recalculates live when devices update
-- Django must run via Daphne for WebSocket support (`daphne -p 8000 config.asgi:application`)
+- `FacilityStatusConsumer` AsyncWebsocketConsumer
+- WebSocket URL `ws/facility/{facility_id}/`
+- `DeviceDetailPanel` with 7-day uptime data
+- Live device tile color updates without page refresh
 
-#### Added — Day 5: UI Redesign + Polish
-- Platform rebranded to **Argus** (hundred-eyed giant who never sleeps)
-- Design system implemented via CSS custom properties in `index.css`
-  - Background: #000000, Surface: #0A0A0A, Surface-2: #111111
-  - Border: #1A1A1A, Border-2: #262626
-  - Text hierarchy: #EDEDED / #707070 / #3A3A3A
-  - Muted status colors: Online #16A34A, Offline #B91C1C, Degraded #B45309
-- Inter font for UI, JetBrains Mono for device codes and timestamps
-- Lucide React icons installed and wired into sidebar navigation
-- Sidebar redesigned — icons + text labels, active state = surface-2 + left border accent
-- Device tiles redesigned — 3px left border status accent, no colored backgrounds
-- Overview page — recent events feed added below facility cards
-- Timeline page — table layout with column headers, monospace timestamps
-- Device detail panel — section headers, cleaner uptime display
-- All status colors referenced via CSS variables — no hardcoded hex values in components
+#### Added — Day 5: UI Redesign + Platform Branding
+- Platform rebranded to **Argus**
+- Dark monochrome design system via CSS custom properties
+- Inter font for UI, JetBrains Mono for codes and timestamps
 
 #### Fixed — Week 2
 - WebSocket reconnection loop — removed `tree` from useEffect dependency array
-- Recovery detection not firing — MQTT subscriber was bypassing Celery by setting status directly
-- `setTree` not accessible in WebSocket handler — exposed from `useFacilityDeviceTree` hook
-- Area health score showing stale data — moved calculation to frontend from live device statuses
-- Celery worker not picking up task changes — required manual restart (no auto-reload)
-- Daphne not starting — `consumers.py` file not found due to incorrect import path
+- Recovery detection not firing — MQTT subscriber bypassing Celery
+- Area health score showing stale data — moved calculation to frontend
 
-#### Known Issues
-- 8 devices permanently UNKNOWN in AP-01 and MC-01 due to duplicate device codes across areas
-  - MQTT subscriber finds first match only when looking up by device_code + facility_code
-  - Scheduled for fix in Week 3 seed data refactor
+---
 
 ## [0.1.0] - 2026-08-05
 
@@ -147,47 +215,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Domain models: Facility, Area, Lane, Device with UUID primary keys
 - TimeStampedModel abstract base class (created_at, updated_at)
 - DeviceType and DeviceStatus TextChoices enums
-- MQTT topic prefix property on Device model
-- Django Admin with inline drill-down navigation (Facility → Area → Lane → Device)
-- Django Debug Toolbar configured for development
+- Django Admin with inline drill-down navigation
 
 #### Added — Day 3: REST API + FastAPI Ingestion
 - Seed script: 3 facilities, 7 areas, 15 lanes, 36 devices across Lahore
 - DRF List/Detail serializer pattern for all hierarchy models
-- ModelViewSets with filtering, search, and ordering
 - JWT authentication endpoints (obtain + refresh)
-- API routing under /api/v1/ with DRF DefaultRouter
-- FastAPI ingestion service on port 8001 with auto-generated Swagger UI
-- POST /ingest/heartbeat — receives heartbeats, updates device status in real time
-- POST /ingest/event — receives vehicle events (entry, exit, payment, fault)
-- GET /health — service and database health check
-- Django ingestion app: Heartbeat + VehicleEvent models
-- Ingestion admin panel showing received heartbeats and events
+- FastAPI ingestion service on port 8001
+- `POST /ingest/heartbeat` and `POST /ingest/event` endpoints
 
 #### Added — Day 4: TimescaleDB + MQTT Subscriber
-- Converted ingestion_heartbeats to TimescaleDB hypertable (1-day chunks)
-- Converted ingestion_vehicle_events to TimescaleDB hypertable (1-day chunks)
+- Converted ingestion tables to TimescaleDB hypertables (1-day chunks)
 - Composite primary key (record_id, timestamp) for TimescaleDB partitioning
-- Compression enabled on both hypertables
-- Continuous aggregate: hourly_lane_traffic (auto-refreshes hourly)
-- Continuous aggregate: hourly_device_heartbeats (auto-refreshes hourly)
-- MQTT subscriber service (paho-mqtt with asyncio event loop)
-- Topic routing: facility/+/device/+/heartbeat and facility/+/device/+/event
-- Full MQTT pipeline verified end-to-end
+- Continuous aggregates: `hourly_lane_traffic`, `hourly_device_heartbeats`
+- MQTT subscriber with asyncio event loop and topic routing
 
 #### Added — Day 5: Device Simulator
-- Async simulator running all 36 devices simultaneously
+- Async simulator running all 32 devices simultaneously
 - Realistic time-of-day traffic curves (4x rush hour, 0.05x night)
-- Device-specific heartbeat metrics per type (gate cycles, LPR read rates, kiosk transactions)
 - 2% random fault injection per heartbeat cycle
-- Pakistani license plate generation (LHR/ISB/KHI/FSD/MUL/PES/QTA prefixes)
-- CLI modes: normal, chaos (random fault injection), fault (targeted device kill)
-- Speed multiplier (--speed 6 compresses a day into 4 hours)
-- Python test publisher for MQTT testing on Windows
+- Pakistani license plate generation (LHR/ISB/KHI/FSD prefixes)
+- CLI modes: normal, chaos, fault with speed multiplier
 
 #### Fixed
 - pgAdmin email validation (fi.local rejected by recent pgAdmin update)
 - PostgreSQL port conflict with native Windows installation (remapped to 5433)
-- Windows .env encoding corruption (em-dash characters causing silent auth failures)
+- Windows .env encoding corruption causing silent auth failures
 - SQLAlchemy jsonb casting (CAST syntax vs :: shorthand with asyncpg)
-- Django apps/ directory missing __init__.py causing module import failures
