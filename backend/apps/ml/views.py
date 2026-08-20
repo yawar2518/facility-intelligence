@@ -2,7 +2,12 @@ from django.shortcuts import render
 
 # Create your views here.
 import logging
+from datetime import timedelta
 from django.utils import timezone
+from django.db.models import Count
+from django.db.models.functions import TruncHour
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -71,6 +76,20 @@ class AnomalyViewSet(viewsets.ReadOnlyModelViewSet):
         anomaly.acknowledged_at = timezone.now()
         anomaly.save(update_fields=['is_acknowledged', 'acknowledged_at'])
 
+        # Broadcast so every connected client's unacknowledged count drops
+        # live — not just whichever tab clicked Acknowledge.
+        try:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"facility_{str(anomaly.facility_id)}",
+                {
+                    'type': 'anomaly_acknowledged',  # maps to consumer method name
+                    'anomaly_id': str(anomaly.id),
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Anomaly-acknowledged WebSocket broadcast failed: {e}")
+
         logger.info(f"Anomaly {anomaly.id} acknowledged")
         return Response(AnomalySerializer(anomaly).data)
 
@@ -113,3 +132,49 @@ class ForecastViewSet(viewsets.ReadOnlyModelViewSet):
 
         accessible = profile.accessible_facilities
         return qs.filter(facility__in=accessible)
+
+    @action(detail=False, methods=['get'], url_path='history')
+    def history(self, request):
+        """
+        GET /api/v1/ml/forecasts/history/?lane=<id>&hours=12
+
+        Hourly actual vehicle-event counts for a lane over the trailing
+        window — pairs with the forecast list to show past vs. predicted
+        traffic in one continuous chart.
+        """
+        from apps.hierarchy.models import Lane
+        from apps.ingestion.models import VehicleEvent
+        from apps.monitoring.views import check_facility_access
+
+        lane_id = request.query_params.get('lane')
+        if not lane_id:
+            return Response({'error': 'lane query param is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            lane = Lane.objects.select_related('area__facility').get(pk=lane_id)
+        except (Lane.DoesNotExist, ValueError):
+            return Response({'error': 'Lane not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not check_facility_access(request.user, lane.area.facility_id):
+            return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            hours = int(request.query_params.get('hours', 12))
+            hours = max(1, min(hours, 72))
+        except ValueError:
+            hours = 12
+
+        since = timezone.now() - timedelta(hours=hours)
+        rows = (
+            VehicleEvent.objects
+            .filter(lane_id=lane_id, timestamp__gte=since)
+            .annotate(hour=TruncHour('timestamp'))
+            .values('hour')
+            .annotate(count=Count('record_id'))
+            .order_by('hour')
+        )
+
+        return Response([
+            {'hour': row['hour'].isoformat(), 'count': row['count']}
+            for row in rows
+        ])

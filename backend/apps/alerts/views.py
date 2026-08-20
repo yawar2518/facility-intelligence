@@ -1,7 +1,12 @@
+from datetime import timedelta
+
 from rest_framework import viewsets, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from apps.core.permissions import FacilityFilterMixin
 from .models import AlertLog
 from .serializers import AlertLogSerializer, AlertLogCSVSerializer
@@ -42,3 +47,18 @@ class AlertLogViewSet(viewsets.ReadOnlyModelViewSet):
         if self.request.accepted_renderer.format == 'csv':
             return AlertLogCSVSerializer
         return AlertLogSerializer
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        24h sent/failed tallies for the header stat row. Computed here
+        rather than on the frontend because the log list itself is
+        paginated (50/page) and can't be summed client-side, and reuses
+        the same facility scoping as the list endpoint.
+        """
+        since = timezone.now() - timedelta(hours=24)
+        qs = self.get_queryset().filter(sent_at__gte=since)
+        return Response({
+            'sent_24h':   qs.filter(status=AlertLog.Status.SENT).count(),
+            'failed_24h': qs.filter(status=AlertLog.Status.FAILED).count(),
+        })

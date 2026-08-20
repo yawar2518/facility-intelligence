@@ -1,316 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Auto-refresh every 60 seconds — no JS needed -->
-  <meta http-equiv="refresh" content="60" />
-  <title>Argus — Parking Status</title>
-  <style>
-    /* ── Design tokens — matches the React dashboard ── */
-    :root {
-      --bg:        #000000;
-      --surface:   #0A0A0A;
-      --surface-2: #111111;
-      --border:    #1A1A1A;
-      --border-2:  #262626;
-      --text-1:    #EDEDED;
-      --text-2:    #707070;
-      --text-3:    #3A3A3A;
-      --online:    #16A34A;
-      --offline:   #B91C1C;
-      --degraded:  #B45309;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argus — Status</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2ece2; --surface: #fbf8f2;
+    --border: rgba(33,29,23,.12); --border-2: rgba(33,29,23,.1); --border-strong: rgba(33,29,23,.16);
+    --text-1: #211d17; --text-2: #6b6357; --text-3: #a89e8d; --text-mid: #4a453b;
+    --online: #1f9e7a; --offline: #cc3b30; --degraded: #c2851a;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text-1);
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { text-decoration: none; color: inherit; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: rgba(33, 29, 23, .16); border-radius: 5px; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  @keyframes pulseG {
+    0%   { box-shadow: 0 0 0 0 rgba(31, 158, 122, .45); }
+    70%  { box-shadow: 0 0 0 6px rgba(31, 158, 122, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(31, 158, 122, 0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes blockIn {
+    from { opacity: 0; transform: scaleY(.35); }
+    to   { opacity: 1; transform: scaleY(1); }
+  }
 
-    body {
-      background: var(--bg);
-      color: var(--text-1);
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      min-height: 100vh;
-    }
+  .fade-in { animation: fadeIn .6s ease-out both; }
 
-    /* ── Layout ── */
-    .page { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 5vw; border-bottom: 1px solid var(--border-2);
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand-name { font-family: Archivo, sans-serif; font-weight: 900; font-size: 22px; letter-spacing: -.02em; }
+  .brand-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .24em; color: var(--text-3); }
+  .login-link {
+    font-size: 12.5px; color: var(--text-2); border: 1px solid var(--border-strong);
+    border-radius: 7px; padding: 7px 14px; transition: all .15s ease-out;
+  }
+  .login-link:hover { background: var(--text-1); color: var(--bg); border-color: var(--text-1); }
 
-    /* ── Header ── */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .logo-icon {
-      width: 28px; height: 28px;
-      border-radius: 6px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-    }
-    .logo-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-1);
-    }
-    .last-updated {
-      font-size: 12px;
-      color: var(--text-2);
-      font-family: 'JetBrains Mono', monospace;
-    }
+  /* The page itself uses the full width up to a generous cap — on a
+     wide monitor the facility cards spread into a grid (below) instead
+     of leaving the sides empty. The banner and footer stay in their
+     own narrower column nested inside, since a headline or a sentence
+     stretched to 1200px reads worse, not better. */
+  main { max-width: 1200px; margin: 0 auto; padding: 30px 5vw 60px; }
 
-    /* ── Global banner ── */
-    .global-banner {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 18px;
-      border-radius: 8px;
-      border: 1px solid;
-      margin-bottom: 32px;
-      font-size: 15px;
-      font-weight: 500;
-    }
-    .global-banner.operational {
-      border-color: var(--online);
-      background: rgba(22, 163, 74, 0.06);
-      color: var(--online);
-    }
-    .global-banner.limited {
-      border-color: var(--degraded);
-      background: rgba(180, 83, 9, 0.06);
-      color: var(--degraded);
-    }
-    .global-banner.disrupted {
-      border-color: var(--offline);
-      background: rgba(185, 28, 28, 0.06);
-      color: var(--offline);
-    }
-    .banner-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: currentColor;
-      flex-shrink: 0;
-    }
+  .banner { max-width: 640px; margin: 0 auto 26px; text-align: center; }
+  .banner-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .14em;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 18px;
+    transition: background-color .4s ease, color .4s ease;
+  }
+  .banner-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .banner h1 {
+    font-family: Archivo, sans-serif; font-weight: 800; font-size: 34px;
+    margin: 0 0 12px; letter-spacing: -.02em; line-height: 1.25;
+  }
+  .banner p.sub {
+    font-size: 15px; color: var(--text-2); margin: 0 0 16px;
+    max-width: 560px; margin-left: auto; margin-right: auto; line-height: 1.55;
+  }
+  .updated {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--text-3);
+  }
+  .updated .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--online); animation: pulseG 2.6s infinite; flex: none; }
 
-    /* ── Facility cards ── */
-    .facility-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 16px;
-      overflow: hidden;
-    }
-    .facility-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .facility-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-1);
-    }
-    .facility-meta {
-      font-size: 12px;
-      color: var(--text-2);
-      margin-top: 2px;
-    }
-    .status-pill {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-      border: 1px solid;
-      white-space: nowrap;
-    }
-    .status-pill.operational {
-      color: var(--online);
-      border-color: var(--online);
-      background: rgba(22, 163, 74, 0.08);
-    }
-    .status-pill.limited {
-      color: var(--degraded);
-      border-color: var(--degraded);
-      background: rgba(180, 83, 9, 0.08);
-    }
-    .status-pill.disrupted {
-      color: var(--offline);
-      border-color: var(--offline);
-      background: rgba(185, 28, 28, 0.08);
-    }
+  /* Legend — a plain-language key so the colors and pills throughout
+     the page are self-explanatory on first glance. */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 13px 20px; margin-bottom: 22px; animation: fadeIn .5s ease-out both;
+  }
+  .legend .item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-mid); }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .legend .lead { font-size: 12.5px; color: var(--text-3); margin-right: 2px; }
 
-    /* ── Customer notices (anomaly alerts) ── */
-    .notices { padding: 10px 20px; border-bottom: 1px solid var(--border); }
-    .notice {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 0;
-      font-size: 13px;
-      color: var(--degraded);
-    }
-    .notice.disruption { color: var(--offline); }
-    .notice-icon { font-size: 13px; flex-shrink: 0; }
+  /* Facility cards spread into a responsive grid instead of stacking
+     in a single narrow column — on a wide screen that's what actually
+     uses the width the sides were leaving empty. A lone trailing card
+     (an odd total, e.g. 3 facilities in 2 columns) spans full width so
+     it doesn't strand a half-empty row. */
+  #facilities {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
+  .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
-    /* ── Area rows ── */
-    .areas { padding: 8px 0; }
-    .area-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 20px;
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .area-row:last-child { border-bottom: none; }
-    .area-name {
-      font-size: 13px;
-      color: var(--text-1);
-      font-weight: 500;
-    }
-    .area-capacity {
-      font-size: 12px;
-      color: var(--text-2);
-      margin-top: 2px;
-    }
-    .area-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .area-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .area-dot.available  { background: var(--online); }
-    .area-dot.limited    { background: var(--degraded); }
-    .area-dot.unavailable { background: var(--offline); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 24px 26px; animation: fadeIn .5s ease-out both;
+  }
+  .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card-head h2 { font-family: Archivo, sans-serif; font-size: 20px; font-weight: 700; margin: 0 0 3px; }
+  .card-head .addr { font-size: 12.5px; color: var(--text-3); }
+  .status-pill {
+    flex: none; font-size: 11.5px; font-weight: 600; padding: 5px 12px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    transition: background-color .4s ease, color .4s ease;
+  }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
 
-    /* ── Footer ── */
-    .footer {
-      margin-top: 40px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-3);
-    }
-    .footer a { color: var(--text-2); text-decoration: none; }
-  </style>
+  .areas { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px; }
+  .area { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-mid); }
+  .area .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; transition: background-color .4s ease; }
+
+  .notice { border: 1px solid; border-radius: 10px; padding: 13px 15px; margin-bottom: 14px; }
+  .notice .label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; letter-spacing: .12em; font-weight: 700; margin-bottom: 5px; }
+  .notice .msg { font-size: 13px; color: var(--text-1); line-height: 1.55; }
+  .notice .tip { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 6px; }
+  .notice .tip b { color: var(--text-mid); font-weight: 600; }
+
+  .history-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .history-head .title { font-size: 11.5px; color: var(--text-3); }
+  .history-head .uptime { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-mid); font-weight: 600; }
+
+  .strip { display: flex; gap: 2.5px; height: 28px; margin-bottom: 7px; }
+  .block {
+    position: relative; flex: 1; min-width: 3px; border-radius: 2px;
+    transform-origin: bottom; animation: blockIn .5s ease-out both;
+    cursor: default;
+  }
+  /* Custom hover tooltip — replaces the native `title` attribute so it
+     can show real per-day numbers (status + uptime%), not just the
+     date, and reads with the rest of the page's own visual language
+     instead of the browser's plain OS tooltip. */
+  .block .tip {
+    position: absolute; bottom: calc(100% + 9px); left: 50%;
+    transform: translate(-50%, 4px);
+    background: var(--text-1); color: var(--bg);
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.5;
+    padding: 7px 10px; border-radius: 7px; white-space: nowrap;
+    opacity: 0; pointer-events: none; z-index: 5;
+    transition: opacity .15s ease-out, transform .15s ease-out;
+  }
+  .block .tip b { font-family: Inter, sans-serif; font-weight: 600; }
+  .block .tip::after {
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--text-1);
+  }
+  .block:hover .tip, .block:focus-visible .tip {
+    opacity: 1; transform: translate(-50%, 0);
+  }
+  .block:first-child .tip { left: 0; transform: translate(0, 4px); }
+  .block:first-child .tip::after { left: 14px; transform: none; }
+  .block:first-child:hover .tip, .block:first-child:focus-visible .tip { transform: translate(0, 0); }
+  .block:last-child .tip { left: auto; right: 0; transform: translate(0, 4px); }
+  .block:last-child .tip::after { left: auto; right: 14px; transform: none; }
+  .block:last-child:hover .tip, .block:last-child:focus-visible .tip { transform: translate(0, 0); }
+
+  .strip-labels { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--text-3); }
+
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--text-3); font-size: 13px; padding: 30px 0; }
+
+  footer {
+    max-width: 640px; margin: 30px auto 0; padding: 0 5vw;
+    text-align: center; font-size: 11.5px; color: var(--text-3); line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 26px 5vw 50px; }
+    .card { padding: 18px; }
+    .banner h1 { font-size: 26px; }
+    .legend { gap: 12px 18px; }
+    #facilities { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
-<div class="page">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <div class="logo-icon">👁</div>
-      <div>
-        <div class="logo-name">Argus Parking</div>
-        <div style="font-size:11px; color:var(--text-2);">Real-time facility status</div>
-      </div>
-    </div>
-    <div class="last-updated">
-      Updated {{ updated_at }} · Refreshes every 60s
-    </div>
+<header>
+  <div class="brand">
+    <span class="brand-name">Argus</span>
+    <span class="brand-tag">STATUS</span>
+  </div>
+  <a class="login-link" href="/">Operator login →</a>
+</header>
+
+<main>
+  <section class="banner fade-in" id="banner"></section>
+
+  <div class="legend">
+    <span class="lead">On this page:</span>
+    <span class="item"><span class="dot" style="background:#1f9e7a"></span>Available — working normally</span>
+    <span class="item"><span class="dot" style="background:#c2851a"></span>Limited — reduced capacity or minor delays</span>
+    <span class="item"><span class="dot" style="background:#cc3b30"></span>Disrupted — largely unavailable right now</span>
   </div>
 
-  <!-- Global banner -->
-  <div class="global-banner {{ global_status }}">
-    <div class="banner-dot"></div>
-    {% if global_status == 'operational' %}
-      All Facilities Operational
-    {% elif global_status == 'limited' %}
-      Some Facilities Experiencing High Demand
-    {% else %}
-      Service Disruption at One or More Facilities
-    {% endif %}
-  </div>
+  <div id="facilities"></div>
 
-  <!-- Facility cards -->
-  {% for facility in facilities %}
-  <div class="facility-card">
+  <footer>
+    This page updates itself automatically every 30 seconds — no need to refresh.<br>
+    Facility staff can sign in via “Operator login” above for live device-level detail.
+  </footer>
+</main>
 
-    <!-- Facility header -->
-    <div class="facility-header">
-      <div>
-        <div class="facility-name">{{ facility.name }}</div>
-        <div class="facility-meta">
-          {{ facility.address|default:"—" }} &nbsp;·&nbsp;
-          Total capacity: {{ facility.total_capacity }} vehicles
-        </div>
-      </div>
-      <div class="status-pill {{ facility.status }}">
-        {% if facility.status == 'operational' %}Operational
-        {% elif facility.status == 'limited' %}Limited Availability
-        {% else %}Disrupted{% endif %}
-      </div>
-    </div>
+{{ initial_data|json_script:"status-data" }}
+<script>
+(function () {
+  var TIER_COLOR = {
+    available:   '#1f9e7a',
+    limited:     '#c2851a',
+    unavailable: '#cc3b30',
+    none:        'rgba(33,29,23,.12)',
+  };
+  var TIER_LABEL = {
+    available:   'Operational',
+    limited:     'Limited availability',
+    unavailable: 'Disrupted',
+    none:        'No data yet',
+  };
+  var STATUS_COPY = {
+    operational: { label: 'Operational',        pillBg: 'rgba(31,158,122,.14)', pillFg: '#1f9e7a' },
+    limited:     { label: 'Partial disruption',  pillBg: 'rgba(194,133,26,.14)', pillFg: '#9a6a12' },
+    disrupted:   { label: 'Disrupted',           pillBg: 'rgba(204,59,48,.14)',  pillFg: '#cc3b30' },
+  };
+  var GLOBAL_COPY = {
+    operational: { label: 'ALL SYSTEMS OPERATIONAL', dot: '#1f9e7a', headline: 'All facilities are operating normally' },
+    limited:     { label: 'PARTIAL DISRUPTION',       dot: '#c2851a', headline: 'Most facilities are operating normally' },
+    disrupted:   { label: 'SERVICE DISRUPTION',       dot: '#cc3b30', headline: 'Some facilities are experiencing disruptions' },
+  };
+  // Plain-language, customer-facing suggestions — kept separate from
+  // the notice's own factual message so the message can stay a literal
+  // description of what's happening and this stays advice.
+  var SUGGESTION = {
+    info:       'Allow a few extra minutes, or use another entrance if one is available.',
+    disruption: 'Please follow on-site signage — some lanes may be temporarily closed while we resolve this.',
+  };
 
-    <!-- Customer notices -->
-    {% if facility.notices %}
-    <div class="notices">
-      {% for notice in facility.notices %}
-      <div class="notice {% if notice.level == 'disruption' %}disruption{% endif %}">
-        <span class="notice-icon">
-          {% if notice.level == 'disruption' %}⚠{% else %}ℹ{% endif %}
-        </span>
-        {{ notice.message }}
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
+  var bannerEl     = document.getElementById('banner');
+  var facilitiesEl = document.getElementById('facilities');
+  var current      = JSON.parse(document.getElementById('status-data').textContent);
 
-    <!-- Area rows -->
-    <div class="areas">
-      {% for area in facility.areas %}
-      <div class="area-row">
-        <div>
-          <div class="area-name">{{ area.name }}</div>
-          <div class="area-capacity">Capacity: {{ area.capacity }} vehicles</div>
-        </div>
-        <div class="area-status">
-          <div class="area-dot {{ area.availability }}"></div>
-          <span style="color:
-            {% if area.availability == 'available' %}var(--online)
-            {% elif area.availability == 'limited' %}var(--degraded)
-            {% else %}var(--offline){% endif %}">
-            {% if area.availability == 'available' %}Available
-            {% elif area.availability == 'limited' %}Limited
-            {% else %}Unavailable{% endif %}
-          </span>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
+  function fmtTime(iso) {
+    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
 
-  </div>
-  {% endfor %}
+  function fmtDate(dateStr) {
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+  }
 
-  <!-- Footer -->
-  <div class="footer">
-    <p>Powered by Argus Facility Intelligence &nbsp;·&nbsp;
-    <a href="/status/">Refresh now</a></p>
-  </div>
+  function summarySentence(data) {
+    var disrupted = data.facilities.find(function (f) { return f.status === 'disrupted'; });
+    var limited   = data.facilities.find(function (f) { return f.status === 'limited'; });
+    var pick = disrupted || limited;
+    if (pick && pick.notices.length) {
+      return pick.notices[0].message + ' Our team is on it.';
+    }
+    if (pick) {
+      return 'Some capacity at ' + pick.name + ' is temporarily reduced.';
+    }
+    return 'All facilities are online and operating normally.';
+  }
 
-</div>
+  function renderBanner(data) {
+    var g = GLOBAL_COPY[data.global_status] || GLOBAL_COPY.operational;
+    bannerEl.innerHTML =
+      '<span class="banner-pill" style="background:' + g.dot + '1a;color:' + g.dot + '">' +
+        '<span class="dot" style="background:' + g.dot + '"></span>' + g.label +
+      '</span>' +
+      '<h1>' + g.headline + '</h1>' +
+      '<p class="sub">' + summarySentence(data) + '</p>' +
+      '<span class="updated"><span class="live-dot"></span>Updated ' + fmtTime(data.updated_at) + ' · refreshes live</span>';
+  }
+
+  function renderStrip(history, uptimePct, days) {
+    var blocks = history.map(function (h, i) {
+      var color = TIER_COLOR[h.tier] || TIER_COLOR.none;
+      var delay = Math.min(i * 0.012, 0.7).toFixed(3);
+      var stat  = h.uptime_pct == null ? TIER_LABEL[h.tier] : TIER_LABEL[h.tier] + ' · ' + h.uptime_pct + '% uptime';
+      return (
+        '<span class="block" tabindex="0" style="background:' + color + ';animation-delay:' + delay + 's">' +
+          '<span class="tip"><b>' + fmtDate(h.date) + '</b><br>' + stat + '</span>' +
+        '</span>'
+      );
+    }).join('');
+    var uptimeLabel = (uptimePct === null || uptimePct === undefined) ? '—' : uptimePct.toFixed(1) + '% uptime over this period';
+    return (
+      '<div class="history-head"><span class="title">Daily status — last ' + days + ' days (hover a day for detail)</span><span class="uptime">' + uptimeLabel + '</span></div>' +
+      '<div class="strip">' + blocks + '</div>' +
+      '<div class="strip-labels"><span>' + days + ' days ago</span><span>today</span></div>'
+    );
+  }
+
+  function renderFacility(f, index, historyDays) {
+    var s = STATUS_COPY[f.status] || STATUS_COPY.operational;
+
+    var areasHtml = f.areas.map(function (a) {
+      var color = a.availability === 'available' ? '#1f9e7a' : a.availability === 'limited' ? '#c2851a' : '#cc3b30';
+      var suffix = a.availability === 'available' ? 'open' : a.availability === 'limited' ? 'limited capacity' : 'closed';
+      return '<span class="area"><span class="dot" style="background:' + color + '"></span>' + a.name + ' — ' + suffix + '</span>';
+    }).join('');
+
+    var noticesHtml = f.notices.map(function (n) {
+      var isDisruption = n.level === 'disruption';
+      var border = isDisruption ? 'rgba(204,59,48,.3)' : 'rgba(194,133,26,.3)';
+      var bg     = isDisruption ? 'rgba(204,59,48,.05)' : 'rgba(194,133,26,.05)';
+      var fg     = isDisruption ? '#cc3b30' : '#9a6a12';
+      var label  = isDisruption ? 'INVESTIGATING' : 'MONITORING';
+      var since  = n.since ? ' · since ' + fmtTime(n.since) : '';
+      return (
+        '<div class="notice" style="border-color:' + border + ';background:' + bg + '">' +
+          '<div class="label" style="color:' + fg + '">' + label + since + '</div>' +
+          '<div class="msg">' + n.message + '</div>' +
+          '<div class="tip"><b>Suggestion:</b> ' + SUGGESTION[n.level] + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    return (
+      '<div class="card fade-in" style="animation-delay:' + (index * 0.08) + 's">' +
+        '<div class="card-head">' +
+          '<div><h2>' + f.name + '</h2><div class="addr">' + (f.address || '') + '</div></div>' +
+          '<span class="status-pill" style="background:' + s.pillBg + ';color:' + s.pillFg + '">' +
+            '<span class="dot" style="background:' + s.pillFg + '"></span>' + s.label +
+          '</span>' +
+        '</div>' +
+        '<div class="areas">' + (areasHtml || '<span class="area" style="color:var(--text-3)">No areas configured</span>') + '</div>' +
+        noticesHtml +
+        renderStrip(f.history, f.period_uptime_pct, historyDays) +
+      '</div>'
+    );
+  }
+
+  function render(data) {
+    current = data;
+    renderBanner(data);
+    facilitiesEl.innerHTML = data.facilities.length
+      ? data.facilities.map(function (f, i) { return renderFacility(f, i, data.history_days); }).join('')
+      : '<p class="empty">No facilities to report on right now.</p>';
+  }
+
+  render(current);
+
+  function poll() {
+    fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function () { /* stay on last-known-good state until the next tick */ });
+  }
+
+  setInterval(poll, 30000);
+})();
+</script>
 </body>
 </html>
