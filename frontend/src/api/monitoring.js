@@ -14,8 +14,8 @@ export const getFacilityHealth = (facilityId) =>
 export const getFacilityDeviceTree = (facilityId) =>
   apiClient.get(`/monitoring/facilities/${facilityId}/devices/`)
 
-export const getFacilityStatusChanges = (facilityId, limit = 50) =>
-  apiClient.get(`/monitoring/facilities/${facilityId}/status-changes/?limit=${limit}`)
+export const getFacilityStatusChanges = (facilityId, limit = 50, offset = 0) =>
+  apiClient.get(`/monitoring/facilities/${facilityId}/status-changes/?limit=${limit}&offset=${offset}`)
 
 // Area endpoints
 export const getAreaHealth = (areaId) =>
@@ -50,5 +50,10 @@ export async function acknowledgeAnomaly(anomalyId) {
 
 export async function getLaneForecast(laneId) {
   const response = await client.get(`/ml/forecasts/?lane=${laneId}`)
+  return response.data
+}
+
+export async function getLaneHistory(laneId, hours = 12) {
+  const response = await client.get(`/ml/forecasts/history/?lane=${laneId}&hours=${hours}`)
   return response.data
 }

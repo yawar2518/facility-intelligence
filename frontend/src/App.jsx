@@ -9,6 +9,7 @@ import AnomaliesPage from './pages/AnomaliesPage'
 import AlertLogsPage from './pages/AlertLogsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import SLADashboardPage from './pages/SLADashboardPage';
+import PlaybackPage from './pages/PlaybackPage';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem('access_token')
@@ -31,6 +32,7 @@ function App() {
         <Route path="/alert-logs" element={<AlertLogsPage />} />
         <Route path="/maintenance" element={<MaintenancePage />} />
         <Route path="/sla" element={<SLADashboardPage />} />
+        <Route path="/playback" element={<PlaybackPage />} />
       </Route>
     </Routes>
   )

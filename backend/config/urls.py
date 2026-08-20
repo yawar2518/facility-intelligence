@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.monitoring.status_views import PublicStatusView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -19,6 +20,10 @@ urlpatterns = [
     path('api/v1/monitoring/', include('apps.monitoring.urls')),
     path('api/v1/ml/', include('apps.ml.urls')),
     path('api/v1/', include('apps.alerts.urls')),
+    # Note: this can't be 'status/' — the authenticated SPA already owns
+    # that path for its Status Grid page (/status), and the Vite dev
+    # proxy matches by prefix, so the two would collide.
+    path('public-status/', PublicStatusView.as_view(), name='public-status'),
 ]
 
 if settings.DEBUG:

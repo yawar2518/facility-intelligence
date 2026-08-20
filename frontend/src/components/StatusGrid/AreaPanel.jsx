@@ -1,23 +1,45 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import LaneRow from './LaneRow'
 
-function AreaPanel({ area, onDeviceClick }) {
+function AreaPanel({ area, onDeviceClick, onForecastClick }) {
   const [isOpen, setIsOpen] = useState(true)
+  const contentRef = useRef(null)
+  const [contentHeight, setContentHeight] = useState(0)
+  const mountedRef = useRef(false)
+
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight)
+    }
+  }, [area.lanes, isOpen])
+
+  useEffect(() => {
+    mountedRef.current = true
+  }, [])
 
   const allDevices = area.lanes.flatMap(l => l.devices)
+  const onlineCount = allDevices.filter(d => d.status === 'ONLINE').length
+  const degradedCount = allDevices.filter(d => d.status === 'DEGRADED').length
   const offlineCount = allDevices.filter(d => d.status === 'OFFLINE').length
+
   const areaHealth = allDevices.length > 0
-    ? Math.round(((allDevices.length - offlineCount) / allDevices.length) * 100)
+    ? Math.round((onlineCount / allDevices.length) * 100)
     : 100
 
-  const healthColor = areaHealth >= 90 ? '#22C55E' : areaHealth >= 70 ? '#F59E0B' : '#EF4444'
+  const hasIssues = offlineCount > 0 || degradedCount > 0
+  const healthColor = areaHealth >= 95
+    ? 'var(--online)'
+    : areaHealth >= 70
+    ? 'var(--degraded)'
+    : 'var(--critical)'
 
   return (
     <div style={{
-      marginBottom: '8px',
-      border: '1px solid var(--border)',
-      borderRadius: '8px',
+      border: hasIssues ? '1px solid rgba(194, 133, 26, 0.35)' : '1px solid var(--border)',
+      borderRadius: '12px',
       overflow: 'hidden',
+      marginBottom: '14px',
+      background: 'var(--surface)',
     }}>
 
       {/* Header */}
@@ -28,59 +50,88 @@ function AreaPanel({ area, onDeviceClick }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '14px 16px',
-          background: 'var(--surface)',
+          padding: '15px 20px',
+          borderBottom: isOpen ? '1px solid var(--border-2)' : 'none',
+          background: 'transparent',
           border: 'none',
           cursor: 'pointer',
           textAlign: 'left',
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{
+            color: 'var(--accent)',
             fontSize: '11px',
-            color: 'var(--text-3)',
             transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
             display: 'inline-block',
             transition: 'transform 150ms ease',
-          }}>▾</span>
+          }}>
+            ▾
+          </span>
           <div>
-            <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-1)' }}>
+            <div style={{
+              fontFamily: 'Archivo, sans-serif',
+              fontWeight: 600,
+              fontSize: '15px',
+            }}>
               {area.name}
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '1px' }}>
+            </div>
+            <div style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '10px',
+              color: 'var(--text-3)',
+              marginTop: '1px',
+            }}>
               {area.code} · {allDevices.length} devices
-            </p>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: healthColor }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+        }}>
+          <span style={{
+            fontFamily: 'Archivo, sans-serif',
+            fontWeight: 700,
+            fontSize: '14px',
+            color: healthColor,
+          }}>
             {areaHealth}%
           </span>
-          <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>
-            cap. {area.capacity}
+          <span style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '10px',
+            color: 'var(--text-3)',
+          }}>
+            cap {area.capacity || 100}
           </span>
         </div>
       </button>
 
       {/* Content */}
-      {isOpen && (
-        <div style={{
-          padding: '12px 16px 16px',
-          background: 'var(--bg)',
-          borderTop: '1px solid var(--border)',
-        }}>
-          {area.lanes.map(lane => (
+      <div style={{
+        maxHeight: isOpen ? `${contentHeight}px` : '0px',
+        opacity: isOpen ? 1 : 0,
+        overflow: 'hidden',
+        transition: mountedRef.current
+          ? 'max-height 280ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms ease'
+          : 'none',
+      }}>
+        <div ref={contentRef} style={{ padding: '16px 20px 20px' }}>
+          {area.lanes.map((lane, i) => (
             <LaneRow
               key={lane.id}
               lane={lane}
+              areaName={area.name}
               onDeviceClick={onDeviceClick}
+              onForecastClick={onForecastClick}
+              isLast={i === area.lanes.length - 1}
             />
           ))}
         </div>
-      )}
+      </div>
 
     </div>
   )

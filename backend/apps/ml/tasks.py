@@ -5,11 +5,43 @@ import numpy as np
 import pandas as pd
 from celery import shared_task
 from django.db import connection
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import joblib
 import os
 from sklearn.ensemble import IsolationForest
 
 logger = logging.getLogger(__name__)
+
+
+def _broadcast_anomaly_created(anomaly):
+    """
+    Pushes a newly-saved anomaly out over the same per-facility WebSocket
+    group device-status updates already use, so the Anomalies page and the
+    nav badge pick it up live instead of waiting on the next poll.
+    Never lets a broadcast failure break anomaly detection itself.
+    """
+    try:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"facility_{str(anomaly.facility_id)}",
+            {
+                'type': 'anomaly_created',  # maps to consumer method name
+                'anomaly_id': str(anomaly.id),
+                'anomaly_type': anomaly.anomaly_type,
+                'severity': anomaly.severity,
+                'sigma_score': anomaly.sigma_score,
+                'explanation': anomaly.explanation,
+                'detected_at': anomaly.detected_at.isoformat(),
+                'facility_id': str(anomaly.facility_id),
+                'facility_name': anomaly.facility.name,
+                'facility_code': anomaly.facility.code,
+                'area_name': anomaly.lane.area.name if anomaly.lane_id else None,
+                'lane_name': anomaly.lane.name if anomaly.lane_id else None,
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Anomaly WebSocket broadcast failed: {e}")
 
 
 def _compute_baseline():
@@ -128,13 +160,23 @@ def _detect_zscore_anomalies(baseline):
         day_names = ['Monday','Tuesday','Wednesday',
                      'Thursday','Friday','Saturday','Sunday']
         day_name  = day_names[py_dow]
+        safe_mean = max(mean, 0.1)  # avoid a divide-by-zero / absurd ratio on a near-empty baseline
 
-        explanation = (
-            f"{day_name} {hour:02d}:00–{hour+1:02d}:00 volume was "
-            f"{abs_sigma:.1f}σ {'above' if sigma > 0 else 'below'} "
-            f"the baseline for this lane "
-            f"(observed={observed}, expected={mean:.1f}, std={std:.1f})"
-        )
+        # Plain-language explanation — operators shouldn't need to know what
+        # a sigma or a standard deviation is to understand what happened.
+        if sigma > 0:
+            ratio = observed / safe_mean
+            explanation = (
+                f"Inbound volume {ratio:.1f}× the usual {day_name} "
+                f"{hour:02d}:00 level for this lane — likely a temporary surge."
+            )
+        else:
+            pct_below = max(0.0, (1 - observed / safe_mean) * 100)
+            explanation = (
+                f"Throughput {pct_below:.0f}% below the usual {day_name} "
+                f"{hour:02d}:00 level for this lane — worth checking for a "
+                f"blockage or device fault."
+            )
 
         anomalies.append({
             'lane_id':        lane_id,
@@ -190,7 +232,7 @@ def detect_traffic_anomalies():
             if already_exists:
                 continue
 
-            Anomaly.objects.create(
+            anomaly = Anomaly.objects.create(
                 facility        = facility,
                 lane            = lane,
                 anomaly_type    = a['anomaly_type'],
@@ -203,6 +245,7 @@ def detect_traffic_anomalies():
                 window_start    = a['window_start'],
                 window_end      = a['window_end'],
             )
+            _broadcast_anomaly_created(anomaly)
             saved += 1
             logger.info(
                 f"Anomaly saved: {a['anomaly_type']} on lane "
@@ -451,14 +494,31 @@ def detect_isolation_forest_anomalies():
         else:
             severity = 'LOW'
 
-        explanation = (
-            f"Unusual activity pattern detected in this lane. "
-            f"{event_count} events processed with "
-            f"{error_rate*100:.1f}% device error rate"
-            f"{f' and {missing_hb} missing heartbeats' if missing_hb > 0 else ''}. "
-            f"IsolationForest anomaly score: {score:.3f} "
-            f"(threshold: -0.5)"
-        )
+        # Plain-language explanation — describe what an operator would
+        # actually want to know (error rate, missed heartbeats), not the
+        # model's internal score.
+        if error_rate > 0 and missing_hb > 0:
+            explanation = (
+                f"Error rate holding at {error_rate*100:.0f}% over the last "
+                f"hour for this lane, with {missing_hb} missed heartbeat"
+                f"{'s' if missing_hb != 1 else ''} — worth a device check."
+            )
+        elif error_rate > 0:
+            explanation = (
+                f"Error rate holding at {error_rate*100:.0f}% over the last "
+                f"hour for this lane — worth a device check."
+            )
+        elif missing_hb > 0:
+            explanation = (
+                f"{missing_hb} missed heartbeat{'s' if missing_hb != 1 else ''} "
+                f"from devices on this lane over the last hour — possible "
+                f"connectivity issue."
+            )
+        else:
+            explanation = (
+                f"Traffic pattern on this lane ({event_count} events this hour) "
+                f"doesn't match its usual profile — worth a look."
+            )
 
         try:
             lane     = Lane.objects.get(id=lane_id)
@@ -474,7 +534,7 @@ def detect_isolation_forest_anomalies():
             if already_exists:
                 continue
 
-            Anomaly.objects.create(
+            anomaly = Anomaly.objects.create(
                 facility        = facility,
                 lane            = lane,
                 anomaly_type    = 'ERROR_RATE',
@@ -487,6 +547,7 @@ def detect_isolation_forest_anomalies():
                 window_start    = window_start,
                 window_end      = window_end,
             )
+            _broadcast_anomaly_created(anomaly)
             saved += 1
             logger.info(f"IF anomaly saved: lane={lane.name}, score={score:.3f}")
 

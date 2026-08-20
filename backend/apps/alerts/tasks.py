@@ -6,11 +6,61 @@ from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .models import AlertRule, AlertLog
 from apps.ml.models import Anomaly
 
 logger = logging.getLogger(__name__)
+
+
+def _broadcast_alert_log_created(log):
+    """
+    Pushes a newly-written AlertLog out over the same per-facility
+    WebSocket groups anomaly and device-status events already use, so the
+    Alert Logs page updates live — new deliveries appear and the 24h
+    sent/failed tally moves — with no reload or poll delay.
+
+    A rule scoped to one facility only reaches that facility's group. A
+    global rule (facility=None) fans out to every active facility's group
+    since any connected browser could be watching it. Never lets a
+    broadcast failure break alert delivery itself.
+    """
+    try:
+        from apps.hierarchy.models import Facility
+
+        payload = {
+            'type': 'alert_log_created',  # maps to consumer method name
+            'id': str(log.id),
+            'status': log.status,
+            'error_message': log.error_message,
+            'sent_at': log.sent_at.isoformat(),
+            'rule': {
+                'id': str(log.rule_id),
+                'name': log.rule.name,
+                'min_severity': log.rule.min_severity,
+                'anomaly_type': log.rule.anomaly_type,
+            },
+            'recipient': {
+                'id': str(log.recipient_id),
+                'name': log.recipient.name,
+                'email': log.recipient.email,
+                'channel': log.recipient.channel,
+            },
+            'anomaly': str(log.anomaly_id) if log.anomaly_id else None,
+        }
+
+        if log.rule.facility_id:
+            facility_ids = [log.rule.facility_id]
+        else:
+            facility_ids = Facility.objects.filter(is_active=True).values_list('id', flat=True)
+
+        channel_layer = get_channel_layer()
+        for facility_id in facility_ids:
+            async_to_sync(channel_layer.group_send)(f"facility_{facility_id}", payload)
+    except Exception as e:
+        logger.warning(f"Alert log WebSocket broadcast failed: {e}")
 
 
 @shared_task(name='evaluate_alert_rules')
@@ -153,22 +203,24 @@ def send_alert_email(rule_id: str, recipient_id: str, anomaly_id: str):
             response.raise_for_status()
 
         # Write success log
-        AlertLog.objects.create(
+        log = AlertLog.objects.create(
             rule=rule,
             recipient=recipient,
             anomaly=anomaly,
             status=AlertLog.Status.SENT,
         )
+        _broadcast_alert_log_created(log)
         logger.info(f"[alerts] Log written — rule '{rule.name}' → {recipient.name}")
 
     except Exception as e:
-        AlertLog.objects.create(
+        log = AlertLog.objects.create(
             rule=rule,
             recipient=recipient,
             anomaly=anomaly,
             status=AlertLog.Status.FAILED,
             error_message=str(e),
         )
+        _broadcast_alert_log_created(log)
         logger.error(f"[alerts] Failed to send alert to {recipient.name}: {e}")
 
 
