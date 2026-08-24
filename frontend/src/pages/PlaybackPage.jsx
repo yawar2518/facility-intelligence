@@ -243,6 +243,7 @@ export default function PlaybackPage() {
   const [endInput,   setEndInput]   = useState(toLocalDatetimeInput(now.toISOString()));
 
   const { data, loading, error, refetch } = usePlayback();
+  const [rangeError, setRangeError] = useState(null);
 
   // Auto-select the first facility and fire the initial 24h fetch once
   // facilities load.
@@ -257,9 +258,16 @@ export default function PlaybackPage() {
   }, [facilities]);
 
   function handleLoad() {
-    const start = new Date(startInput).toISOString();
-    const end   = new Date(endInput).toISOString();
-    refetch(selectedFacility, start, end);
+    const start = new Date(startInput);
+    const end   = new Date(endInput);
+
+    if (start >= end) {
+      setRangeError('Start date must be before end date.');
+      return;
+    }
+
+    setRangeError(null);
+    refetch(selectedFacility, start.toISOString(), end.toISOString());
   }
 
   // ── Build interleaved event feed ──────────────────────────
@@ -358,7 +366,7 @@ export default function PlaybackPage() {
             <input
               type="datetime-local"
               value={startInput}
-              onChange={e => setStartInput(e.target.value)}
+              onChange={e => { setStartInput(e.target.value); setRangeError(null); }}
               style={{
                 background: 'var(--surface-white)', border: '1px solid var(--border-strong)',
                 color: 'var(--text-1)', borderRadius: '7px',
@@ -374,7 +382,7 @@ export default function PlaybackPage() {
             <input
               type="datetime-local"
               value={endInput}
-              onChange={e => setEndInput(e.target.value)}
+              onChange={e => { setEndInput(e.target.value); setRangeError(null); }}
               style={{
                 background: 'var(--surface-white)', border: '1px solid var(--border-strong)',
                 color: 'var(--text-1)', borderRadius: '7px',
@@ -415,6 +423,10 @@ export default function PlaybackPage() {
             </span>
           )}
         </div>
+
+        {rangeError && (
+          <p style={{ color: 'var(--critical)', fontSize: '13px', marginBottom: '16px' }}>{rangeError}</p>
+        )}
 
         {error && (
           <p style={{ color: 'var(--critical)', fontSize: '13px', marginBottom: '16px' }}>{error}</p>
