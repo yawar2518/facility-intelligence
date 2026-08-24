@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import useAnomalies from '../hooks/useAnomalies'
 import { useLiveEventListener } from '../hooks/useLiveUpdates'
 import Dropdown from '../components/Dropdown'
+import CsvExportButton from '../components/CsvExportButton'
 
 const SEVERITY_OPTIONS = [
   { value: '',         label: 'All severities' },
@@ -296,30 +297,20 @@ export default function AnomaliesPage() {
             {anomalies.length} anomalies
           </span>
 
-          <button style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'var(--surface)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: '7px',
-            padding: '7px 12px',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '11px',
-            color: 'var(--text-1)',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--text-1)'
-            e.currentTarget.style.color = 'var(--bg)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--surface)'
-            e.currentTarget.style.color = 'var(--text-1)'
-          }}
-          >
-            ↓ Export CSV
-          </button>
+          <CsvExportButton
+            endpoint="ml/anomalies/"
+            filename="anomalies.csv"
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: '7px',
+              padding: '7px 12px',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '11px',
+              color: 'var(--text-1)',
+            }}
+            hoverStyle={{ background: 'var(--text-1)', color: 'var(--bg)' }}
+          />
         </div>
 
         {/* List */}

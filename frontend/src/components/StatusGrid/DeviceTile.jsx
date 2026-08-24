@@ -33,12 +33,25 @@ function DeviceTile({ device, onClick }) {
     SENSOR:           'Sensor',
   }
 
+  // Every status gets a fully colored border now, not just a colored
+  // accent stripe on the left with an otherwise neutral-gray tile —
+  // ONLINE reads as a calm, translucent tint of its color since it's
+  // the "nothing to see here" state, while DEGRADED/OFFLINE stay bold
+  // and full-saturation (plus a glow) since those need attention.
+  const tileBorder = {
+    ONLINE:      { color: 'rgba(31, 158, 122, 0.45)', weight: '1.5px', glow: null },
+    DEGRADED:    { color: 'var(--degraded)',          weight: '2px',   glow: '0 0 0 4px rgba(194, 133, 26, 0.08)' },
+    OFFLINE:     { color: 'var(--offline)',           weight: '2px',   glow: '0 0 0 4px rgba(204, 59, 48, 0.08)' },
+    UNKNOWN:     { color: 'rgba(168, 158, 141, 0.5)', weight: '1.5px', glow: null },
+    MAINTENANCE: { color: 'rgba(107, 99, 87, 0.4)',   weight: '1.5px', glow: null },
+  }
+
   const border = statusBorder[device.status] || statusBorder.UNKNOWN
   const dot = statusDot[device.status] || statusDot.UNKNOWN
   const label = statusLabel[device.status] || statusLabel.UNKNOWN
+  const tile = tileBorder[device.status] || tileBorder.UNKNOWN
 
   const isDegraded = device.status === 'DEGRADED'
-  const isOffline = device.status === 'OFFLINE'
 
   return (
     <div
@@ -46,23 +59,19 @@ function DeviceTile({ device, onClick }) {
       style={{
         width: '158px',
         background: 'var(--surface-white)',
-        border: isDegraded
-          ? '2px solid var(--degraded)'
-          : isOffline
-          ? '1px solid rgba(33, 29, 23, 0.1)'
-          : '1px solid rgba(33, 29, 23, 0.1)',
+        border: `${tile.weight} solid ${tile.color}`,
         borderLeft: `3px solid ${border}`,
         borderRadius: '8px',
         padding: '11px 12px',
         cursor: 'pointer',
-        boxShadow: isDegraded ? '0 0 0 4px rgba(194, 133, 26, 0.08)' : 'none',
+        boxShadow: tile.glow || 'none',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = isDegraded ? 'var(--degraded)' : 'rgba(33, 29, 23, 0.32)'
-        e.currentTarget.style.borderLeftColor = border
+        // Full-saturation on hover across every status, not just degraded.
+        e.currentTarget.style.borderColor = border
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = isDegraded ? 'var(--degraded)' : 'rgba(33, 29, 23, 0.1)'
+        e.currentTarget.style.borderColor = tile.color
         e.currentTarget.style.borderLeftColor = border
       }}
     >
