@@ -13,7 +13,7 @@ DEBUG = True
 # ============================================================
 # ALLOWED HOSTS — permissive in development
 # ============================================================
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
 
 # ============================================================
 # DEBUG TOOLBAR
