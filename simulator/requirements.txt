@@ -1,0 +1,6 @@
+# ============================================================
+# SIMULATOR — MQTT device simulator dependencies
+# ============================================================
+paho-mqtt==2.1.0
+psycopg[binary]==3.2.3
+python-dotenv==1.0.1
