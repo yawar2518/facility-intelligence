@@ -8,6 +8,39 @@ import DeviceDetailPanel from '../components/StatusGrid/DeviceDetailPanel'
 import LaneForecastPanel from '../components/StatusGrid/LaneForecastPanel'
 import Dropdown from '../components/Dropdown'
 
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .sg-header {
+      padding: 10px 16px !important;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sg-header-right {
+      gap: 8px !important;
+    }
+    .sg-header-clock {
+      display: none !important;
+    }
+    .sg-content {
+      padding: 16px 16px 60px !important;
+    }
+    .sg-summary-bar {
+      flex-wrap: wrap !important;
+      gap: 12px !important;
+      padding: 14px 16px !important;
+    }
+    .sg-summary-divider {
+      display: none !important;
+    }
+    .sg-summary-stats {
+      width: 100% !important;
+      margin-left: 0 !important;
+      flex-wrap: wrap;
+      gap: 12px !important;
+    }
+  }
+`
+
 // A shimmering placeholder block — the same skeletonPulse animation
 // used across the rest of the app in place of bare "Loading..." text.
 function Skeleton({ width, height = '1em', style }) {
@@ -192,17 +225,19 @@ function StatusGridPage() {
   // a snapshot from whenever the tree was first fetched and never move as
   // live device-status events patch individual devices in place.
   const allDevices = tree?.areas.flatMap(area => area.lanes.flatMap(lane => lane.devices)) || []
-  const onlineCount = allDevices.filter(d => d.status === 'ONLINE').length
+  const onlineCount   = allDevices.filter(d => d.status === 'ONLINE').length
   const degradedCount = allDevices.filter(d => d.status === 'DEGRADED').length
-  const offlineCount = allDevices.filter(d => d.status === 'OFFLINE').length
-  const healthScore = allDevices.length > 0
+  const offlineCount  = allDevices.filter(d => d.status === 'OFFLINE').length
+  const healthScore   = allDevices.length > 0
     ? Math.round(((allDevices.length - offlineCount) / allDevices.length) * 1000) / 10
     : 100
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="sg-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -215,11 +250,12 @@ function StatusGridPage() {
           fontSize: '10px',
           letterSpacing: '0.2em',
           color: 'var(--text-4)',
+          whiteSpace: 'nowrap',
         }}>
           STATUS GRID <span style={{ color: 'var(--text-light)' }}>/</span> LIVE
         </div>
 
-        <div style={{
+        <div className="sg-header-right" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '14px',
@@ -243,10 +279,12 @@ function StatusGridPage() {
             />
           )}
 
-          <span style={{
+          {/* Clock — hidden on mobile via .sg-header-clock */}
+          <span className="sg-header-clock" style={{
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: '11px',
             color: 'var(--text-2)',
+            whiteSpace: 'nowrap',
           }}>
             {formatTime(currentTime)} PKT
           </span>
@@ -254,7 +292,7 @@ function StatusGridPage() {
       </div>
 
       {/* Main Content */}
-      <div className="fade-in" style={{
+      <div className="fade-in sg-content" style={{
         flex: 1,
         overflow: 'auto',
         padding: '28px 34px 60px',
@@ -293,7 +331,7 @@ function StatusGridPage() {
         {/* Facility Summary Bar */}
         {tree && !treeLoading && (
           <>
-            <div style={{
+            <div className="sg-summary-bar" style={{
               display: 'flex',
               alignItems: 'center',
               gap: '22px',
@@ -304,11 +342,15 @@ function StatusGridPage() {
               marginBottom: '22px',
               animation: 'floatUp 0.4s ease-out both',
             }}>
-              <div>
+              {/* Facility name + address */}
+              <div style={{ minWidth: 0 }}>
                 <div style={{
                   fontFamily: 'Archivo, sans-serif',
                   fontWeight: 700,
                   fontSize: '18px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}>
                   {tree.facility_name}
                 </div>
@@ -317,18 +359,24 @@ function StatusGridPage() {
                   fontSize: '10px',
                   color: 'var(--text-3)',
                   marginTop: '2px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}>
                   {tree.facility_code} · {tree.address || 'Location'}
                 </div>
               </div>
 
-              <div style={{
+              {/* Divider — hidden on mobile */}
+              <div className="sg-summary-divider" style={{
                 width: '1px',
                 height: '34px',
                 background: 'var(--border)',
+                flex: 'none',
               }}/>
 
-              <div>
+              {/* Health score */}
+              <div style={{ flex: 'none' }}>
                 <div style={{
                   fontFamily: 'Archivo, sans-serif',
                   fontWeight: 800,
@@ -350,23 +398,26 @@ function StatusGridPage() {
                 </div>
               </div>
 
-              <div style={{
+              {/* Online / degraded / offline counts + areas/lanes */}
+              <div className="sg-summary-stats" style={{
                 display: 'flex',
                 gap: '20px',
                 marginLeft: 'auto',
                 fontSize: '12px',
+                flexWrap: 'wrap',
               }}>
                 <span style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                   color: 'var(--text-mid)',
+                  whiteSpace: 'nowrap',
                 }}>
                   <span style={{
-                    width: '8px',
-                    height: '8px',
+                    width: '8px', height: '8px',
                     borderRadius: '50%',
                     background: 'var(--online)',
+                    flex: 'none',
                   }}/>
                   <b style={{ fontWeight: 600 }}>{onlineCount}</b> online
                 </span>
@@ -377,13 +428,14 @@ function StatusGridPage() {
                     alignItems: 'center',
                     gap: '6px',
                     color: 'var(--text-mid)',
+                    whiteSpace: 'nowrap',
                   }}>
                     <span style={{
-                      width: '8px',
-                      height: '8px',
+                      width: '8px', height: '8px',
                       borderRadius: '50%',
                       background: 'var(--degraded)',
                       animation: 'pulseA 2.4s infinite',
+                      flex: 'none',
                     }}/>
                     <b style={{ fontWeight: 600 }}>{degradedCount}</b> degraded
                   </span>
@@ -394,17 +446,18 @@ function StatusGridPage() {
                   alignItems: 'center',
                   gap: '6px',
                   color: offlineCount > 0 ? 'var(--text-mid)' : 'var(--text-3)',
+                  whiteSpace: 'nowrap',
                 }}>
                   <span style={{
-                    width: '8px',
-                    height: '8px',
+                    width: '8px', height: '8px',
                     borderRadius: '50%',
                     background: offlineCount > 0 ? 'var(--offline)' : 'var(--text-light)',
+                    flex: 'none',
                   }}/>
                   <b style={{ fontWeight: 600 }}>{offlineCount}</b> offline
                 </span>
 
-                <span style={{ color: 'var(--text-3)' }}>
+                <span style={{ color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
                   {tree.areas.length} areas · {tree.total_lanes || 0} lanes
                 </span>
               </div>

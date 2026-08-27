@@ -1,5 +1,22 @@
 import { useDeviceDetail } from '../../hooks/useDeviceDetail'
 
+// On mobile the panel goes full-width (100vw) and full-height instead
+// of the fixed 372px drawer — injected via a <style> tag so we can use
+// a media query without adding a CSS file.
+const PANEL_STYLES = `
+  .ddp-panel {
+    width: 372px;
+  }
+  @media (max-width: 768px) {
+    .ddp-panel {
+      width: 100% !important;
+      max-width: 100vw !important;
+      top: 52px !important;
+      height: calc(100% - 52px) !important;
+    }
+  }
+`
+
 function DeviceDetailPanel({ device, onClose }) {
   const { uptime, loading } = useDeviceDetail(device?.id)
 
@@ -30,7 +47,6 @@ function DeviceDetailPanel({ device, onClose }) {
     if (d === 0 && h === 0) return `${m}m`
     if (d === 0 && m === 0) return `${h}h`
     if (d === 0) return `${h}h ${m}m`
-    if (d === 0 && m === 0) return `${d}d`
     if (m === 0) return `${d}d ${h}h`
     return `${d}d ${h}h ${m}m`
   }
@@ -39,6 +55,8 @@ function DeviceDetailPanel({ device, onClose }) {
 
   return (
     <>
+      <style>{PANEL_STYLES}</style>
+
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -51,12 +69,11 @@ function DeviceDetailPanel({ device, onClose }) {
       />
 
       {/* Panel */}
-      <div style={{
+      <div className="ddp-panel" style={{
         position: 'absolute',
         top: 0,
         right: 0,
         height: '100%',
-        width: '372px',
         background: '#f7f2e9',
         borderLeft: '1px solid rgba(33, 29, 23, 0.14)',
         boxShadow: '-16px 0 40px rgba(33, 29, 23, 0.12)',
@@ -97,6 +114,7 @@ function DeviceDetailPanel({ device, onClose }) {
               fontSize: '16px',
               color: 'var(--text-3)',
               cursor: 'pointer',
+              padding: '4px 8px',
             }}
             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-1)'}
             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-3)'}
@@ -179,14 +197,15 @@ function DeviceDetailPanel({ device, onClose }) {
               gap: '9px',
             }}>
               {[
-                { label: 'Type', value: device.device_type },
-                { label: 'Firmware', value: device.firmware_version || '—' },
-                { label: 'Heartbeat timeout', value: `${device.heartbeat_timeout_seconds}s` },
-                { label: 'Serial', value: device.serial_number || '—' },
+                { label: 'Type',               value: device.device_type },
+                { label: 'Firmware',           value: device.firmware_version || '—' },
+                { label: 'Heartbeat timeout',  value: `${device.heartbeat_timeout_seconds}s` },
+                { label: 'Serial',             value: device.serial_number || '—' },
               ].map(({ label, value }) => (
                 <div key={label} style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  gap: '12px',
                 }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-2)' }}>
                     {label}
@@ -195,6 +214,7 @@ function DeviceDetailPanel({ device, onClose }) {
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '11px',
                     color: 'var(--text-mid)',
+                    textAlign: 'right',
                   }}>
                     {value}
                   </span>
@@ -259,8 +279,8 @@ function DeviceDetailPanel({ device, onClose }) {
                 gap: '8px',
               }}>
                 {[
-                  { label: 'Online', value: formatDuration(uptime.online_seconds), color: 'var(--online)' },
-                  { label: 'Offline', value: formatDuration(uptime.offline_seconds), color: 'var(--critical)' },
+                  { label: 'Online',   value: formatDuration(uptime.online_seconds),   color: 'var(--online)' },
+                  { label: 'Offline',  value: formatDuration(uptime.offline_seconds),  color: 'var(--critical)' },
                   { label: 'Degraded', value: formatDuration(uptime.degraded_seconds), color: 'var(--degraded)' },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{

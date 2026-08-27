@@ -119,7 +119,6 @@ function StatusChangeRow({ change, index, isLast }) {
 
           {meta && (
             <span style={{
-              marginLeft: 'auto',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '10.5px',
               color: 'var(--text-3)',
@@ -152,4 +151,4 @@ function StatusChangeRow({ change, index, isLast }) {
   )
 }
 
-export default StatusChangeRow
+export default StatusChangeRow  

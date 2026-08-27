@@ -1,3 +1,6 @@
+// Mobile: tiles grow to fill the row in pairs via flex on the parent
+// (LaneRow sets flexWrap: wrap; each tile uses flex: 1 1 140px so two
+// fit side-by-side on 390px and three on wider screens — same as desktop).
 function DeviceTile({ device, onClick }) {
 
   const statusBorder = {
@@ -47,9 +50,9 @@ function DeviceTile({ device, onClick }) {
   }
 
   const border = statusBorder[device.status] || statusBorder.UNKNOWN
-  const dot = statusDot[device.status] || statusDot.UNKNOWN
-  const label = statusLabel[device.status] || statusLabel.UNKNOWN
-  const tile = tileBorder[device.status] || tileBorder.UNKNOWN
+  const dot    = statusDot[device.status]    || statusDot.UNKNOWN
+  const label  = statusLabel[device.status]  || statusLabel.UNKNOWN
+  const tile   = tileBorder[device.status]   || tileBorder.UNKNOWN
 
   const isDegraded = device.status === 'DEGRADED'
 
@@ -57,7 +60,11 @@ function DeviceTile({ device, onClick }) {
     <div
       onClick={onClick}
       style={{
-        width: '158px',
+        // flex: 1 1 140px means tiles grow to fill a row in pairs on
+        // mobile (358px content width → two 169px tiles) and in rows of
+        // three or more on desktop — without changing the visual design.
+        flex: '1 1 140px',
+        minWidth: '130px',
         background: 'var(--surface-white)',
         border: `${tile.weight} solid ${tile.color}`,
         borderLeft: `3px solid ${border}`,
@@ -67,7 +74,6 @@ function DeviceTile({ device, onClick }) {
         boxShadow: tile.glow || 'none',
       }}
       onMouseEnter={e => {
-        // Full-saturation on hover across every status, not just degraded.
         e.currentTarget.style.borderColor = border
       }}
       onMouseLeave={e => {
