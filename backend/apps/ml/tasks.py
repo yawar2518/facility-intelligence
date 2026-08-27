@@ -93,8 +93,8 @@ def _detect_zscore_anomalies(baseline):
     from apps.hierarchy.models import Facility, Lane
 
     now          = datetime.now(timezone.utc)
-    window_end   = now.replace(minute=0, second=0, microsecond=0)
-    window_start = window_end - timedelta(hours=1)
+    window_end   = now
+    window_start = now - timedelta(hours=1)
 
     # Python weekday(): 0=Monday, 6=Sunday
     # PostgreSQL DOW:   0=Sunday, 6=Saturday
@@ -386,7 +386,7 @@ def train_isolation_forest():
 
     model = IsolationForest(
         n_estimators=100,
-        contamination=0.02,
+        contamination=0.05,
         random_state=42,
         n_jobs=-1       # use all CPU cores
     )
@@ -418,10 +418,10 @@ def detect_isolation_forest_anomalies():
 
     model = joblib.load(MODEL_PATH)
 
-    # Build feature vector for the last completed hour only
+    # Build feature vector for the last rolling hour
     now          = datetime.now(timezone.utc)
-    window_end   = now.replace(minute=0, second=0, microsecond=0)
-    window_start = window_end - timedelta(hours=1)
+    window_end   = now
+    window_start = now - timedelta(hours=1)
 
     # Get event counts per lane for this hour
     with connection.cursor() as cursor:
@@ -484,12 +484,11 @@ def detect_isolation_forest_anomalies():
             continue  # Normal — skip
 
         # Determine severity from anomaly score
-        # score_samples returns negative values — more negative = worse
-        if score < -0.6:
+        if score < -0.7:
             severity = 'CRITICAL'
-        elif score < -0.5:
+        elif score < -0.6:
             severity = 'HIGH'
-        elif score < -0.4:
+        elif score < -0.5:
             severity = 'MEDIUM'
         else:
             severity = 'LOW'
@@ -537,7 +536,7 @@ def detect_isolation_forest_anomalies():
             anomaly = Anomaly.objects.create(
                 facility        = facility,
                 lane            = lane,
-                anomaly_type    = 'ERROR_RATE',
+                anomaly_type    = 'ERROR_RATE' if error_rate > 0 else ('MISSING_HEARTBEAT' if missing_hb > 0 else 'TRAFFIC_ANOMALY'),
                 severity        = severity,
                 observed_value  = float(score),
                 baseline_value  = -0.5,  # contamination boundary

@@ -52,7 +52,8 @@ export function LiveUpdatesProvider({ children }) {
     if (!facilities.length) return
 
     const sockets = facilities.map((facility) => {
-      const ws = new WebSocket(`ws://localhost:8000/ws/facility/${facility.id}/`)
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/facility/${facility.id}/`)
 
       ws.onmessage = (e) => {
         const update = JSON.parse(e.data)

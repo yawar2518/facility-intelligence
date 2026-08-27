@@ -13,7 +13,7 @@ DEBUG = True
 # ============================================================
 # ALLOWED HOSTS — permissive in development
 # ============================================================
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
 
 # ============================================================
 # DEBUG TOOLBAR
@@ -85,3 +85,5 @@ LOGGING = {
 # EMAIL — print to console in development (no real emails)
 # ============================================================
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+CSRF_TRUSTED_ORIGINS = ['https://argu.live', 'https://www.argu.live', 'http://141.148.222.77:8000', 'http://localhost:8000']
