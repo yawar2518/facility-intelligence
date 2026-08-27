@@ -59,13 +59,12 @@ const ROLE_LABELS = {
   FACILITY_OWNER:   'Facility Owner',
 }
 
-function Layout() {
+function Layout({ onLogout }) {
   const navigate = useNavigate()
   const { user } = useCurrentUser()
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    if (onLogout) onLogout()
     navigate('/login')
   }
 
