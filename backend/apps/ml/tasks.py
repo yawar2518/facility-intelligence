@@ -484,12 +484,11 @@ def detect_isolation_forest_anomalies():
             continue  # Normal — skip
 
         # Determine severity from anomaly score
-        # score_samples returns negative values — more negative = worse
-        if score < -0.6:
+        if score < -0.7:
             severity = 'CRITICAL'
-        elif score < -0.5:
+        elif score < -0.6:
             severity = 'HIGH'
-        elif score < -0.4:
+        elif score < -0.5:
             severity = 'MEDIUM'
         else:
             severity = 'LOW'
@@ -537,7 +536,7 @@ def detect_isolation_forest_anomalies():
             anomaly = Anomaly.objects.create(
                 facility        = facility,
                 lane            = lane,
-                anomaly_type    = 'ERROR_RATE',
+                anomaly_type    = 'ERROR_RATE' if error_rate > 0 else ('MISSING_HEARTBEAT' if missing_hb > 0 else 'TRAFFIC_ANOMALY'),
                 severity        = severity,
                 observed_value  = float(score),
                 baseline_value  = -0.5,  # contamination boundary
