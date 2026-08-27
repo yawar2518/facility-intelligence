@@ -418,10 +418,10 @@ def detect_isolation_forest_anomalies():
 
     model = joblib.load(MODEL_PATH)
 
-    # Build feature vector for the last completed hour only
+    # Build feature vector for the last rolling hour
     now          = datetime.now(timezone.utc)
-    window_end   = now.replace(minute=0, second=0, microsecond=0)
-    window_start = window_end - timedelta(hours=1)
+    window_end   = now
+    window_start = now - timedelta(hours=1)
 
     # Get event counts per lane for this hour
     with connection.cursor() as cursor:
