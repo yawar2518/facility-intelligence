@@ -7,33 +7,62 @@ import {
 import { usePlayback } from '../hooks/usePlayback';
 import { useFacilities } from '../hooks/useFacilities';
 
-// ── Chart palette — muted fills for the bars, saturated for the
-// reference lines/legend, matching the rest of the app's severity
-// colors but toned down so a whole bar of it stays readable. ──
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .pb-header {
+      padding: 10px 16px !important;
+    }
+    .pb-content {
+      padding: 24px 16px 48px !important;
+    }
+    .pb-title {
+      font-size: 26px !important;
+    }
+    .pb-controls {
+      padding: 14px 14px !important;
+      gap: 10px !important;
+    }
+    .pb-controls-meta {
+      margin-left: 0 !important;
+    }
+    .pb-chart-legend {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+    .pb-load-btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .pb-form-field {
+      width: 100% !important;
+    }
+    .pb-form-field input,
+    .pb-form-field select {
+      width: 100% !important;
+    }
+  }
+`
+
+// ── Chart palette ──
 const BAR_DEFAULT = '#d9cdb8';
 const BAR_SPIKE   = '#e0b98a';
 const BAR_DROP    = '#e59a92';
 const LINE_SPIKE  = 'var(--degraded-dark)';
 const LINE_DROP   = 'var(--critical)';
 
-// ── Helpers ────────────────────────────────────────────────
+// ── Helpers ──
 
 function toLocalDatetimeInput(isoString) {
-  // Converts ISO string → "YYYY-MM-DDTHH:MM" for datetime-local input
   const d = new Date(isoString);
   const pad = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatTime(isoString) {
-  // Short HH:MM for chart axis and feed timestamps
   return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatDateTime(isoString) {
-  // Full date+time — used for the chart tooltip, a standalone popup
-  // that isn't grouped under a date header the way feed rows are, so
-  // it needs to state the date itself.
   return new Date(isoString).toLocaleString([], {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -41,19 +70,11 @@ function formatDateTime(isoString) {
 }
 
 function formatRowTime(isoString) {
-  // Time-only for feed rows — the date is stated once per day by the
-  // group header above them (see formatDayLabel), not repeated on
-  // every row.
   return new Date(isoString).toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
 
-// Groups the feed under a date header wherever the calendar day
-// changes — the selected window can span multiple days, and this
-// keeps the whole thing as one continuous, scrollable list (matching
-// the traffic chart above it, which always covers the full window)
-// instead of hiding days behind a switcher.
 function formatDayLabel(isoString) {
   const d = new Date(isoString);
   const today = new Date();
@@ -79,12 +100,6 @@ function statusColor(status) {
   return 'var(--text-2)';
 }
 
-// Assigns each traffic anomaly to its nearest chart bucket, so the bar
-// itself can be tinted and a reference line can land exactly on an
-// XAxis tick (recharts needs an exact category match to place it).
-// Only TRAFFIC_SPIKE/TRAFFIC_DROP are traffic-volume events — device or
-// error-rate anomalies aren't about this chart's series and stay out of
-// it (they still show up in the Event Feed below).
 function buildBucketAnomalyMap(buckets, anomalies) {
   const map = {};
   if (!buckets?.length) return map;
@@ -100,8 +115,6 @@ function buildBucketAnomalyMap(buckets, anomalies) {
       if (diff < closestDiff) { closestDiff = diff; closest = b.bucket; }
     }
 
-    // If two anomalies land on the same bucket, keep the more severe one.
-    // sigma_score is signed (negative for drops), so compare magnitude.
     const existing = map[closest];
     if (!existing || Math.abs(a.sigma_score ?? 0) > Math.abs(existing.sigma_score ?? 0)) {
       map[closest] = a;
@@ -110,7 +123,7 @@ function buildBucketAnomalyMap(buckets, anomalies) {
   return map;
 }
 
-// ── Chart pieces ───────────────────────────────────────────
+// ── Chart tooltip ──
 
 function TrafficTooltip({ active, label, payload, anomaliesByBucket }) {
   if (!active || !payload?.length) return null;
@@ -150,7 +163,7 @@ function TrafficTooltip({ active, label, payload, anomaliesByBucket }) {
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────
+// ── Feed rows ──
 
 function StatusChangeRow({ item, delay }) {
   return (
@@ -230,13 +243,12 @@ function AnomalyRow({ item, delay }) {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────
+// ── Main page ──
 
 export default function PlaybackPage() {
   const { facilities } = useFacilities();
   const [selectedFacility, setSelectedFacility] = useState('');
 
-  // Default window: last 24 hours
   const now       = new Date();
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const [startInput, setStartInput] = useState(toLocalDatetimeInput(yesterday.toISOString()));
@@ -245,8 +257,6 @@ export default function PlaybackPage() {
   const { data, loading, error, refetch } = usePlayback();
   const [rangeError, setRangeError] = useState(null);
 
-  // Auto-select the first facility and fire the initial 24h fetch once
-  // facilities load.
   useEffect(() => {
     if (facilities.length > 0 && !selectedFacility) {
       const firstId = facilities[0].id;
@@ -270,7 +280,6 @@ export default function PlaybackPage() {
     refetch(selectedFacility, start.toISOString(), end.toISOString());
   }
 
-  // ── Build interleaved event feed ──────────────────────────
   const feedItems = [];
   if (data) {
     data.status_changes.forEach(c => feedItems.push({ ...c, _type: 'status', _time: c.changed_at }));
@@ -278,7 +287,6 @@ export default function PlaybackPage() {
     feedItems.sort((a, b) => new Date(a._time) - new Date(b._time));
   }
 
-  // ── Bar coloring + reference lines for the chart ──────────
   const bucketAnomalies = data ? buildBucketAnomalyMap(data.traffic_buckets, data.anomalies) : {};
   const referenceLines  = Object.entries(bucketAnomalies).map(([bucket, a]) => ({
     bucket,
@@ -288,8 +296,10 @@ export default function PlaybackPage() {
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="pb-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -302,6 +312,7 @@ export default function PlaybackPage() {
           fontSize: '10px',
           letterSpacing: '0.2em',
           color: 'var(--text-4)',
+          whiteSpace: 'nowrap',
         }}>
           PLAYBACK <span style={{ color: 'var(--text-light)' }}>/</span> HISTORICAL
         </div>
@@ -309,21 +320,23 @@ export default function PlaybackPage() {
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           color: 'var(--text-2)',
+          whiteSpace: 'nowrap',
         }}>
           Asia/Karachi
         </span>
       </div>
 
-      {/* Main Content — fades/rises in on every mount (initial load,
-          reload, or route switch) and smooth-scrolls on its own axis.
-          This scrollable wrapper is also what fixes the page: without
-          it, content taller than the viewport had nowhere to scroll and
-          was simply clipped by the layout's outer `overflow: hidden`. */}
-      <div className="fade-in" style={{ flex: 1, overflow: 'auto', scrollBehavior: 'smooth', padding: '32px 34px 48px' }}>
+      {/* Main Content */}
+      <div className="fade-in pb-content" style={{
+        flex: 1,
+        overflow: 'auto',
+        scrollBehavior: 'smooth',
+        padding: '32px 34px 48px',
+      }}>
 
         {/* Title */}
         <div style={{ marginBottom: '22px' }}>
-          <h1 style={{
+          <h1 className="pb-title" style={{
             fontFamily: 'Archivo, sans-serif',
             fontWeight: 800,
             fontSize: '34px',
@@ -338,12 +351,12 @@ export default function PlaybackPage() {
         </div>
 
         {/* Controls */}
-        <div style={{
+        <div className="pb-controls" style={{
           display: 'flex', gap: '14px', alignItems: 'flex-end', flexWrap: 'wrap',
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: '12px', padding: '16px 18px', marginBottom: '22px',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="pb-form-field" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ color: 'var(--text-3)', fontSize: '11px' }}>Facility</label>
             <select
               value={selectedFacility}
@@ -361,7 +374,7 @@ export default function PlaybackPage() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="pb-form-field" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ color: 'var(--text-3)', fontSize: '11px' }}>Start</label>
             <input
               type="datetime-local"
@@ -377,7 +390,7 @@ export default function PlaybackPage() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="pb-form-field" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ color: 'var(--text-3)', fontSize: '11px' }}>End</label>
             <input
               type="datetime-local"
@@ -394,6 +407,7 @@ export default function PlaybackPage() {
           </div>
 
           <button
+            className="pb-load-btn"
             onClick={handleLoad}
             disabled={loading || !selectedFacility}
             style={{
@@ -412,7 +426,7 @@ export default function PlaybackPage() {
           </button>
 
           {data && (
-            <span style={{
+            <span className="pb-controls-meta" style={{
               marginLeft: 'auto',
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '10px',
@@ -448,7 +462,13 @@ export default function PlaybackPage() {
                   vehicle events · facility-wide
                 </span>
 
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '16px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' }}>
+                <div className="pb-chart-legend" style={{
+                  marginLeft: 'auto',
+                  display: 'flex',
+                  gap: '16px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: LINE_SPIKE }}>
                     <span style={{ width: '2px', height: '10px', background: LINE_SPIKE, flex: 'none' }} />
                     traffic spike
