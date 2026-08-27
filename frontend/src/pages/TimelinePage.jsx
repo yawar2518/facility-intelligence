@@ -5,6 +5,22 @@ import { useLiveEventListener } from '../hooks/useLiveUpdates'
 import StatusChangeRow from '../components/Timeline/StatusChangeRow'
 import Dropdown from '../components/Dropdown'
 
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .tl-header {
+      padding: 10px 16px !important;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tl-content {
+      padding: 24px 16px 60px !important;
+    }
+    .tl-title {
+      font-size: 26px !important;
+    }
+  }
+`
+
 // A shimmering placeholder block — the same skeletonPulse animation
 // used across the rest of the app in place of bare "Loading..." text.
 function Skeleton({ width, height = '1em', style }) {
@@ -102,8 +118,10 @@ function TimelinePage() {
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="tl-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -116,6 +134,7 @@ function TimelinePage() {
           fontSize: '10px',
           letterSpacing: '0.2em',
           color: 'var(--text-4)',
+          whiteSpace: 'nowrap',
         }}>
           TIMELINE <span style={{ color: 'var(--text-light)' }}>/</span> STATUS CHANGES
         </div>
@@ -141,14 +160,14 @@ function TimelinePage() {
       </div>
 
       {/* Main Content */}
-      <div className="fade-in" style={{
+      <div className="fade-in tl-content" style={{
         flex: 1,
         overflow: 'auto',
         scrollBehavior: 'smooth',
         padding: '32px 34px 60px',
       }}>
 
-        <h1 style={{
+        <h1 className="tl-title" style={{
           fontFamily: 'Archivo, sans-serif',
           fontWeight: 800,
           fontSize: '34px',
