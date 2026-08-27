@@ -237,10 +237,26 @@ function LoginPage({ onLogin }) {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="login-outer" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <style>{`
         @media (max-width: 860px) {
-          .login-brand-panel { display: none !important; }
+          .login-outer { flex-direction: column !important; }
+          .login-brand-panel {
+            flex: none !important;
+            padding: 28px 24px !important;
+            justify-content: flex-start !important;
+            gap: 20px !important;
+          }
+          .login-brand-wordmark { display: none !important; }
+          .login-brand-hero h1 { font-size: 22px !important; margin-bottom: 0 !important; }
+          .login-brand-hero p  { display: none !important; }
+          .login-brand-wall    { display: none !important; }
+          .login-brand-stats {
+            padding-top: 16px !important;
+            gap: 20px !important;
+            flex-wrap: wrap !important;
+          }
+          .login-form-panel { padding: 28px 24px !important; align-items: flex-start !important; }
         }
 
         /* Neutralize the browser's own autofill background (Chrome's
@@ -283,7 +299,7 @@ function LoginPage({ onLogin }) {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        <div>
+        <div className="login-brand-wordmark">
           <div style={{ fontFamily: 'Archivo, sans-serif', fontWeight: 900, fontSize: '28px', letterSpacing: '-0.02em' }}>
             Argus
           </div>
@@ -298,7 +314,7 @@ function LoginPage({ onLogin }) {
           </div>
         </div>
 
-        <div className="slide-up" style={{ animationDelay: '0.1s', maxWidth: '380px' }}>
+        <div className="login-brand-hero slide-up" style={{ animationDelay: '0.1s', maxWidth: '380px' }}>
           <h1 style={{
             fontFamily: 'Archivo, sans-serif',
             fontWeight: 800,
@@ -318,10 +334,12 @@ function LoginPage({ onLogin }) {
             Anomaly detection, predictive maintenance, and SLA reporting
             across every facility, updated in real time.
           </p>
-          <OpsWall />
+          <div className="login-brand-wall">
+            <OpsWall />
+          </div>
         </div>
 
-        <div className="slide-up" style={{
+        <div className="login-brand-stats slide-up" style={{
           animationDelay: '0.2s',
           display: 'flex',
           alignItems: 'center',
@@ -344,7 +362,7 @@ function LoginPage({ onLogin }) {
       </div>
 
       {/* ── Right — sign in ── */}
-      <div style={{
+      <div className="login-form-panel" style={{
         flex: '1 1 54%',
         display: 'flex',
         alignItems: 'center',
