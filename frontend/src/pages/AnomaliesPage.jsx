@@ -4,6 +4,56 @@ import { useLiveEventListener } from '../hooks/useLiveUpdates'
 import Dropdown from '../components/Dropdown'
 import CsvExportButton from '../components/CsvExportButton'
 
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .an-header {
+      padding: 10px 16px !important;
+    }
+    .an-header-clock {
+      display: none !important;
+    }
+    .an-content {
+      padding: 24px 16px 48px !important;
+    }
+    .an-title-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 16px !important;
+    }
+    .an-title {
+      font-size: 26px !important;
+    }
+    .an-counts {
+      flex-direction: row !important;
+      gap: 20px !important;
+      text-align: left !important;
+    }
+    .an-count-num {
+      font-size: 24px !important;
+    }
+    .an-row {
+      flex-wrap: wrap !important;
+      gap: 10px !important;
+    }
+    .an-row-severity {
+      width: auto !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+    .an-row-body {
+      width: 100% !important;
+      flex: none !important;
+    }
+    .an-row-actions {
+      flex-direction: row !important;
+      align-items: center !important;
+      width: 100% !important;
+      justify-content: space-between !important;
+    }
+  }
+`
+
 const SEVERITY_OPTIONS = [
   { value: '',         label: 'All severities' },
   { value: 'CRITICAL', label: 'CRITICAL'       },
@@ -12,7 +62,7 @@ const SEVERITY_OPTIONS = [
   { value: 'LOW',       label: 'LOW'           },
 ]
 const TYPE_OPTIONS = [
-  { value: '',                label: 'All types'         },
+  { value: '',                label: 'All types'       },
   { value: 'TRAFFIC_SPIKE',   label: 'Traffic Spike'   },
   { value: 'TRAFFIC_DROP',    label: 'Traffic Drop'    },
   { value: 'DEVICE_FLAPPING', label: 'Device Flapping' },
@@ -103,15 +153,17 @@ export default function AnomaliesPage() {
   // explicitly or the tally wouldn't actually drop when you acknowledge.
   const counts = {
     CRITICAL: anomalies.filter(a => a.severity === 'CRITICAL' && !a.is_acknowledged).length,
-    HIGH:     anomalies.filter(a => a.severity === 'HIGH' && !a.is_acknowledged).length,
-    MEDIUM:   anomalies.filter(a => a.severity === 'MEDIUM' && !a.is_acknowledged).length,
-    LOW:      anomalies.filter(a => a.severity === 'LOW' && !a.is_acknowledged).length,
+    HIGH:     anomalies.filter(a => a.severity === 'HIGH'     && !a.is_acknowledged).length,
+    MEDIUM:   anomalies.filter(a => a.severity === 'MEDIUM'   && !a.is_acknowledged).length,
+    LOW:      anomalies.filter(a => a.severity === 'LOW'      && !a.is_acknowledged).length,
   }
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="an-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -124,30 +176,32 @@ export default function AnomaliesPage() {
           fontSize: '10px',
           letterSpacing: '0.2em',
           color: 'var(--text-4)',
+          whiteSpace: 'nowrap',
         }}>
           ANOMALIES <span style={{ color: 'var(--text-light)' }}>/</span> ALL FACILITIES
         </div>
-        <span style={{
+        <span className="an-header-clock" style={{
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           color: 'var(--text-2)',
+          whiteSpace: 'nowrap',
         }}>
           {formatTime(currentTime)} PKT
         </span>
       </div>
 
       {/* Main Content */}
-      <div className="fade-in" style={{ flex: 1, overflow: 'auto', padding: '32px 34px 48px' }}>
+      <div className="fade-in an-content" style={{ flex: 1, overflow: 'auto', padding: '32px 34px 48px' }}>
 
-        {/* Header */}
-        <div style={{
+        {/* Title + severity counts */}
+        <div className="an-title-row" style={{
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'space-between',
           marginBottom: '24px',
         }}>
           <div>
-            <h1 style={{
+            <h1 className="an-title" style={{
               fontFamily: 'Archivo, sans-serif',
               fontWeight: 800,
               fontSize: '34px',
@@ -165,87 +219,38 @@ export default function AnomaliesPage() {
             </p>
           </div>
 
-          <div style={{
+          <div className="an-counts" style={{
             display: 'flex',
             gap: '26px',
             textAlign: 'right',
+            flex: 'none',
           }}>
-            <div>
-              <div style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 900,
-                fontSize: '32px',
-                color: 'var(--critical)',
-                lineHeight: 1,
-              }}>
-                {counts.CRITICAL}
+            {[
+              { label: 'CRITICAL', count: counts.CRITICAL, color: 'var(--critical)' },
+              { label: 'HIGH',     count: counts.HIGH,     color: 'var(--high-dark)' },
+              { label: 'MEDIUM',   count: counts.MEDIUM,   color: 'var(--medium-dark)' },
+              { label: 'LOW',      count: counts.LOW,      color: 'var(--text-3)' },
+            ].map(({ label, count, color }) => (
+              <div key={label}>
+                <div className="an-count-num" style={{
+                  fontFamily: 'Archivo, sans-serif',
+                  fontWeight: 900,
+                  fontSize: '32px',
+                  color,
+                  lineHeight: 1,
+                }}>
+                  {count}
+                </div>
+                <div style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '9px',
+                  color: 'var(--text-3)',
+                  marginTop: '3px',
+                }}>
+                  {label}
+                </div>
               </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
-                color: 'var(--text-3)',
-                marginTop: '3px',
-              }}>
-                CRITICAL
-              </div>
-            </div>
-            <div>
-              <div style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 900,
-                fontSize: '32px',
-                color: 'var(--high-dark)',
-                lineHeight: 1,
-              }}>
-                {counts.HIGH}
-              </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
-                color: 'var(--text-3)',
-                marginTop: '3px',
-              }}>
-                HIGH
-              </div>
-            </div>
-            <div>
-              <div style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 900,
-                fontSize: '32px',
-                color: 'var(--medium-dark)',
-                lineHeight: 1,
-              }}>
-                {counts.MEDIUM}
-              </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
-                color: 'var(--text-3)',
-                marginTop: '3px',
-              }}>
-                MEDIUM
-              </div>
-            </div>
-            <div>
-              <div style={{
-                fontFamily: 'Archivo, sans-serif',
-                fontWeight: 900,
-                fontSize: '32px',
-                color: 'var(--text-3)',
-                lineHeight: 1,
-              }}>
-                {counts.LOW}
-              </div>
-              <div style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: '9px',
-                color: 'var(--text-3)',
-                marginTop: '3px',
-              }}>
-                LOW
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -344,6 +349,7 @@ export default function AnomaliesPage() {
             return (
               <div
                 key={anomaly.id}
+                className="an-row"
                 style={{
                   display: 'flex',
                   gap: '14px',
@@ -353,14 +359,20 @@ export default function AnomaliesPage() {
                   opacity: isAcknowledged ? 0.5 : 1,
                 }}
               >
+                {/* Left accent bar */}
                 <span style={{
                   width: '4px',
                   flex: 'none',
                   borderRadius: '2px',
+                  alignSelf: 'stretch',
                   background: isAcknowledged ? 'var(--text-light)' : severityColor[anomaly.severity] || 'var(--text-3)',
                 }}/>
 
-                <div style={{ width: '118px', flex: 'none' }}>
+                {/* Severity + sigma */}
+                <div className="an-row-severity" style={{
+                  width: '118px',
+                  flex: 'none',
+                }}>
                   <div style={{
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '11px',
@@ -379,7 +391,8 @@ export default function AnomaliesPage() {
                   </div>
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                {/* Explanation + location */}
+                <div className="an-row-body" style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '10.5px',
@@ -406,7 +419,8 @@ export default function AnomaliesPage() {
                   </div>
                 </div>
 
-                <div style={{
+                {/* Time + ack button */}
+                <div className="an-row-actions" style={{
                   flex: 'none',
                   display: 'flex',
                   flexDirection: 'column',
@@ -417,6 +431,7 @@ export default function AnomaliesPage() {
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '10px',
                     color: 'var(--text-3)',
+                    whiteSpace: 'nowrap',
                   }}>
                     {formatTimeAgo(anomaly.detected_at)}
                   </span>
@@ -438,6 +453,7 @@ export default function AnomaliesPage() {
                         borderRadius: '6px',
                         padding: '4px 11px',
                         cursor: 'pointer',
+                        whiteSpace: 'nowrap',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = 'var(--text-1)'
@@ -455,6 +471,7 @@ export default function AnomaliesPage() {
                       fontFamily: 'JetBrains Mono, monospace',
                       fontSize: '9.5px',
                       color: 'var(--online)',
+                      whiteSpace: 'nowrap',
                     }}>
                       ✓ acknowledged
                     </span>
