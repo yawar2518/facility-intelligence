@@ -93,8 +93,8 @@ def _detect_zscore_anomalies(baseline):
     from apps.hierarchy.models import Facility, Lane
 
     now          = datetime.now(timezone.utc)
-    window_end   = now.replace(minute=0, second=0, microsecond=0)
-    window_start = window_end - timedelta(hours=1)
+    window_end   = now
+    window_start = now - timedelta(hours=1)
 
     # Python weekday(): 0=Monday, 6=Sunday
     # PostgreSQL DOW:   0=Sunday, 6=Saturday
