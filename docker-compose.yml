@@ -204,7 +204,7 @@ services:
     container_name: fi_simulator
     restart: unless-stopped
     env_file: .env.docker
-    command: python simulator.py --speed 3
+    command: python simulator.py --mode chaos --speed 3
     depends_on:
       db:
         condition: service_healthy
