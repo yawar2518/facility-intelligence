@@ -5,6 +5,68 @@ import { useLiveEventListener } from '../hooks/useLiveUpdates';
 import { useCountUp } from '../hooks/useCountUp';
 import CsvExportButton from '../components/CsvExportButton';
 
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .al-header {
+      padding: 10px 16px !important;
+    }
+    .al-header-clock {
+      display: none !important;
+    }
+    .al-content {
+      padding: 24px 16px 48px !important;
+    }
+    .al-title-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 14px !important;
+      margin-bottom: 18px !important;
+    }
+    .al-title {
+      font-size: 26px !important;
+    }
+    .al-stats {
+      flex-direction: row !important;
+      gap: 20px !important;
+    }
+    .al-stat-num {
+      font-size: 24px !important;
+    }
+    /* Hide the desktop table header on mobile */
+    .al-table-header {
+      display: none !important;
+    }
+    /* Switch rows from grid to card layout */
+    .al-table-row {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+      padding: 14px 16px !important;
+    }
+    .al-col-rule {
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    .al-col-recipient {
+      font-size: 11.5px !important;
+    }
+    .al-col-meta {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+      align-items: center !important;
+      margin-top: 2px !important;
+    }
+    /* Hide redundant desktop-only columns on mobile */
+    .al-col-type,
+    .al-col-severity,
+    .al-col-status-desktop,
+    .al-col-time-desktop {
+      display: none !important;
+    }
+  }
+`
+
 const STATUS_FILTERS = [
   { value: '',       label: 'All'    },
   { value: 'SENT',   label: 'Sent'   },
@@ -21,8 +83,6 @@ const SEVERITY_COLOR = {
 export default function AlertLogsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [currentTime, setCurrentTime]   = useState(new Date());
-  // Ids of rows that just arrived over the live feed — driven off, not
-  // stored on, the log itself, so the flash plays once and then forgets.
   const [liveIds, setLiveIds] = useState(new Set());
 
   const filters = {};
@@ -30,15 +90,11 @@ export default function AlertLogsPage() {
 
   const { logs, setLogs, totalCount, stats, setStats, loading, error } = useAlertLogs(filters);
 
-  // Clock in the top bar, same pattern as the other DETECT pages.
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Live alert-delivery events (from the shared WebSocket connection in
-  // Layout) — a new send or failure appears at the top instantly and the
-  // 24h tally moves with it, no reload or poll delay needed.
   useLiveEventListener(useCallback((event) => {
     if (event.kind !== 'alert_log_created') return;
 
@@ -90,8 +146,10 @@ export default function AlertLogsPage() {
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="al-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -104,30 +162,32 @@ export default function AlertLogsPage() {
           fontSize: '10px',
           letterSpacing: '0.2em',
           color: 'var(--text-4)',
+          whiteSpace: 'nowrap',
         }}>
           ALERT LOGS <span style={{ color: 'var(--text-light)' }}>/</span> DELIVERY
         </div>
-        <span style={{
+        <span className="al-header-clock" style={{
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           color: 'var(--text-2)',
+          whiteSpace: 'nowrap',
         }}>
           {formatTime(currentTime)} PKT
         </span>
       </div>
 
       {/* Main Content */}
-      <div className="fade-in" style={{ flex: 1, overflow: 'auto', padding: '32px 34px 48px' }}>
+      <div className="fade-in al-content" style={{ flex: 1, overflow: 'auto', padding: '32px 34px 48px' }}>
 
-        {/* Title + 24h tally */}
-        <div style={{
+        {/* Title + 24h stats */}
+        <div className="al-title-row" style={{
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'space-between',
           marginBottom: '24px',
         }}>
           <div>
-            <h1 style={{
+            <h1 className="al-title" style={{
               fontFamily: 'Archivo, sans-serif',
               fontWeight: 800,
               fontSize: '34px',
@@ -141,9 +201,9 @@ export default function AlertLogsPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '22px', textAlign: 'right' }}>
+          <div className="al-stats" style={{ display: 'flex', gap: '22px', textAlign: 'right', flex: 'none' }}>
             <div>
-              <div style={{
+              <div className="al-stat-num" style={{
                 fontFamily: 'Archivo, sans-serif',
                 fontWeight: 900,
                 fontSize: '30px',
@@ -162,7 +222,7 @@ export default function AlertLogsPage() {
               </div>
             </div>
             <div>
-              <div style={{
+              <div className="al-stat-num" style={{
                 fontFamily: 'Archivo, sans-serif',
                 fontWeight: 900,
                 fontSize: '30px',
@@ -189,6 +249,7 @@ export default function AlertLogsPage() {
           alignItems: 'center',
           gap: '8px',
           marginBottom: '18px',
+          flexWrap: 'wrap',
         }}>
           <span style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -262,7 +323,8 @@ export default function AlertLogsPage() {
             overflow: 'hidden',
           }}
         >
-          <div style={{
+          {/* Desktop table header — hidden on mobile */}
+          <div className="al-table-header" style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(170px,1fr) minmax(150px,200px) 150px 100px 110px 130px',
             gap: '16px',
@@ -310,7 +372,9 @@ export default function AlertLogsPage() {
             return (
               <div
                 key={log.id}
+                className="al-table-row"
                 style={{
+                  // Desktop: 6-column grid. Mobile: overridden to flex column by .al-table-row CSS
                   display: 'grid',
                   gridTemplateColumns: 'minmax(170px,1fr) minmax(150px,200px) 150px 100px 110px 130px',
                   gap: '16px',
@@ -322,15 +386,28 @@ export default function AlertLogsPage() {
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(33, 29, 23, 0.03)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
-                <span style={{ fontSize: '12.5px', fontWeight: 500, color: 'var(--text-1)' }}>
+                {/* Rule name */}
+                <span className="al-col-rule" style={{
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  color: 'var(--text-1)',
+                }}>
                   {log.rule?.name ?? '—'}
                 </span>
 
-                <span style={{ fontSize: '12px', color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {/* Recipient */}
+                <span className="al-col-recipient" style={{
+                  fontSize: '12px',
+                  color: 'var(--text-2)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
                   {log.recipient?.email ?? log.recipient?.name ?? '—'}
                 </span>
 
-                <span style={{
+                {/* Type — desktop only */}
+                <span className="al-col-type" style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: '10.5px',
                   color: 'var(--text-2)',
@@ -338,7 +415,8 @@ export default function AlertLogsPage() {
                   {log.rule?.anomaly_type ?? 'ANY'}
                 </span>
 
-                <span style={{
+                {/* Severity — desktop only */}
+                <span className="al-col-severity" style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: '10.5px',
                   color: SEVERITY_COLOR[log.rule?.min_severity] ?? 'var(--text-3)',
@@ -346,7 +424,8 @@ export default function AlertLogsPage() {
                   {log.rule?.min_severity ?? '—'}
                 </span>
 
-                <span style={{
+                {/* Status — desktop only (shown in mobile meta row instead) */}
+                <span className="al-col-status-desktop" style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '5px',
@@ -360,7 +439,8 @@ export default function AlertLogsPage() {
                   {log.status}
                 </span>
 
-                <span style={{
+                {/* Sent at — desktop only */}
+                <span className="al-col-time-desktop" style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: '10.5px',
                   color: 'var(--text-3)',
@@ -368,6 +448,30 @@ export default function AlertLogsPage() {
                 }}>
                   {formatSentAt(log.sent_at)}
                 </span>
+
+                {/* Mobile-only meta row: status + severity + time in one line */}
+                <div className="al-col-meta" style={{
+                  display: 'none', // shown on mobile via CSS
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                  color: 'var(--text-3)',
+                }}>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    color: isSent ? 'var(--online)' : 'var(--critical)',
+                    fontWeight: 600,
+                  }}>
+                    {isSent ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                    {log.status}
+                  </span>
+                  <span style={{ color: SEVERITY_COLOR[log.rule?.min_severity] ?? 'var(--text-3)' }}>
+                    {log.rule?.min_severity ?? '—'}
+                  </span>
+                  <span>{log.rule?.anomaly_type ?? 'ANY'}</span>
+                  <span style={{ marginLeft: 'auto' }}>{formatSentAt(log.sent_at)}</span>
+                </div>
               </div>
             );
           })}
