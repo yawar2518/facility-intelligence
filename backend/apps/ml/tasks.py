@@ -386,7 +386,7 @@ def train_isolation_forest():
 
     model = IsolationForest(
         n_estimators=100,
-        contamination=0.02,
+        contamination=0.05,
         random_state=42,
         n_jobs=-1       # use all CPU cores
     )
