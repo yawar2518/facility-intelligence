@@ -8,6 +8,60 @@ import { useFacilitySLA } from '../hooks/useFacilitySLA'
 import { useCountUp } from '../hooks/useCountUp'
 import { useLiveEventListener } from '../hooks/useLiveUpdates'
 
+// Responsive rules — same pattern as Layout.jsx (inline-style codebase,
+// one injected <style> block for breakpoint logic only).
+const MOBILE_STYLES = `
+  @media (max-width: 768px) {
+    .dash-header {
+      padding: 12px 16px !important;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .dash-header-time {
+      font-size: 10px !important;
+    }
+    .dash-content {
+      padding: 20px 16px !important;
+    }
+    .dash-hero {
+      grid-template-columns: 1fr !important;
+      gap: 24px !important;
+    }
+    .dash-hero-number {
+      font-size: 72px !important;
+    }
+    .dash-hero-desc {
+      font-size: 14px !important;
+      margin: 14px 0 16px !important;
+    }
+    .dash-stats {
+      flex-direction: column !important;
+      gap: 0 !important;
+      border-top: 1px solid var(--border-2);
+      padding-top: 16px;
+      justify-content: flex-start !important;
+    }
+    .dash-stat-link {
+      padding-bottom: 14px !important;
+      margin-bottom: 4px;
+    }
+    .dash-stat-number {
+      font-size: 26px !important;
+    }
+    .dash-facilities {
+      flex-direction: column !important;
+    }
+    .dash-facility-card {
+      flex: none !important;
+      width: 100% !important;
+    }
+    .dash-bottom {
+      grid-template-columns: 1fr !important;
+      gap: 28px !important;
+    }
+  }
+`
+
 // A shimmering placeholder block — same skeletonPulse animation the
 // design system already ships in index.css, just never wired up to
 // anything yet. Used everywhere below in place of a "0.0%"/"0" that
@@ -277,15 +331,17 @@ function DashboardPage() {
     : null
 
   // Counter animations
-  const animatedFleetHealth = useCountUp(parseFloat(fleetHealth) || 0, 1000)
-  const animatedUnacknowledged = useCountUp(unacknowledgedAnomalies.length, 1000)
-  const animatedAlerts24h = useCountUp(alertsLast24h, 1000)
-  const animatedAvgUptime = useCountUp(parseFloat(avgUptime) || 0, 1000)
+  const animatedFleetHealth      = useCountUp(parseFloat(fleetHealth) || 0, 1000)
+  const animatedUnacknowledged   = useCountUp(unacknowledgedAnomalies.length, 1000)
+  const animatedAlerts24h        = useCountUp(alertsLast24h, 1000)
+  const animatedAvgUptime        = useCountUp(parseFloat(avgUptime) || 0, 1000)
 
   return (
     <>
+      <style>{MOBILE_STYLES}</style>
+
       {/* Header Bar */}
-      <div style={{
+      <div className="dash-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -301,26 +357,28 @@ function DashboardPage() {
         }}>
           OVERVIEW <span style={{ color: 'var(--text-light)' }}>/</span> ALL FACILITIES
         </div>
-        <span style={{
+        <span className="dash-header-time" style={{
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '11px',
           color: 'var(--text-2)',
+          whiteSpace: 'nowrap',
         }}>
           {formatDate()} · <span style={{ color: 'var(--text-1)' }}>{formatTime(currentTime)}</span> PKT
         </span>
       </div>
 
       {/* Main Content */}
-      <div className="fade-in" style={{ flex: 1, overflow: 'auto', padding: '34px' }}>
+      <div className="fade-in dash-content" style={{ flex: 1, overflow: 'auto', padding: '34px' }}>
 
         {/* Hero Section */}
-        <div style={{
+        <div className="dash-hero" style={{
           display: 'grid',
           gridTemplateColumns: '1.4fr 1fr',
           gap: '48px',
           paddingBottom: '30px',
           borderBottom: '1px solid var(--border)',
         }}>
+          {/* Left — big health number */}
           <div>
             <div style={{
               fontFamily: 'JetBrains Mono, monospace',
@@ -331,7 +389,7 @@ function DashboardPage() {
             }}>
               FLEET HEALTH · LAST 60S
             </div>
-            <div style={{
+            <div className="dash-hero-number" style={{
               fontFamily: 'Archivo, sans-serif',
               fontWeight: 900,
               fontSize: '96px',
@@ -346,7 +404,7 @@ function DashboardPage() {
                 </span>
               )}
             </div>
-            <p style={{
+            <p className="dash-hero-desc" style={{
               fontSize: '16px',
               lineHeight: 1.55,
               color: 'var(--text-2)',
@@ -382,13 +440,14 @@ function DashboardPage() {
             </div>
           </div>
 
-          <div style={{
+          {/* Right — three stat links */}
+          <div className="dash-stats" style={{
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             gap: '20px',
           }}>
-            <Link to="/anomalies" style={{
+            <Link className="dash-stat-link" to="/anomalies" style={{
               display: 'flex',
               alignItems: 'baseline',
               justifyContent: 'space-between',
@@ -401,7 +460,7 @@ function DashboardPage() {
               {anomalyLoading ? (
                 <Skeleton width="42px" height="26px" />
               ) : (
-                <span style={{
+                <span className="dash-stat-number" style={{
                   fontFamily: 'Archivo, sans-serif',
                   fontWeight: 800,
                   fontSize: '30px',
@@ -413,7 +472,7 @@ function DashboardPage() {
               )}
             </Link>
 
-            <Link to="/alert-logs" style={{
+            <Link className="dash-stat-link" to="/alert-logs" style={{
               display: 'flex',
               alignItems: 'baseline',
               justifyContent: 'space-between',
@@ -426,7 +485,7 @@ function DashboardPage() {
               {alertsLoading ? (
                 <Skeleton width="30px" height="26px" />
               ) : (
-                <span style={{
+                <span className="dash-stat-number" style={{
                   fontFamily: 'Archivo, sans-serif',
                   fontWeight: 800,
                   fontSize: '30px',
@@ -437,7 +496,7 @@ function DashboardPage() {
               )}
             </Link>
 
-            <Link to="/sla" style={{
+            <Link className="dash-stat-link" to="/sla" style={{
               display: 'flex',
               alignItems: 'baseline',
               justifyContent: 'space-between',
@@ -448,7 +507,7 @@ function DashboardPage() {
               {slaLoading ? (
                 <Skeleton width="58px" height="26px" />
               ) : (
-                <span style={{
+                <span className="dash-stat-number" style={{
                   fontFamily: 'Archivo, sans-serif',
                   fontWeight: 800,
                   fontSize: '30px',
@@ -475,7 +534,7 @@ function DashboardPage() {
 
         {error && <p style={{ fontSize: '12px', color: 'var(--critical)' }}>{error}</p>}
 
-        <div style={{
+        <div className="dash-facilities" style={{
           display: 'flex',
           gap: '18px',
           marginBottom: '8px',
@@ -485,11 +544,11 @@ function DashboardPage() {
           ))}
 
           {!loading && facilities.map((facility, index) => {
-            const health = facility.health?.health_score || 0
-            const online = facility.health?.online || 0
+            const health   = facility.health?.health_score || 0
+            const online   = facility.health?.online || 0
             const degraded = facility.health?.degraded || 0
-            const offline = facility.health?.offline || 0
-            const total = facility.health?.total_devices || 0
+            const offline  = facility.health?.offline || 0
+            const total    = facility.health?.total_devices || 0
             const hasIssues = offline > 0 || degraded > 0
             // When a card is juggling all three states at once it gets tight —
             // abbreviate to keep the summary line on one row.
@@ -499,7 +558,7 @@ function DashboardPage() {
               <Link
                 key={facility.id}
                 to={`/status?facility=${facility.id}`}
-                className="slide-up"
+                className="dash-facility-card slide-up"
                 style={{
                   flex: 1,
                   background: 'var(--surface)',
@@ -611,7 +670,7 @@ function DashboardPage() {
         </div>
 
         {/* Feed + Events Two-Column */}
-        <div style={{
+        <div className="dash-bottom" style={{
           display: 'grid',
           gridTemplateColumns: '1.4fr 1fr',
           gap: '36px',
@@ -673,12 +732,13 @@ function DashboardPage() {
                   background: severityColor[anomaly.severity] || 'var(--text-3)',
                 }}/>
 
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '9px',
                     marginBottom: '4px',
+                    flexWrap: 'wrap',
                   }}>
                     <span style={{
                       fontFamily: 'JetBrains Mono, monospace',
@@ -781,7 +841,7 @@ function DashboardPage() {
                   animation: `floatUp 0.4s ease-out ${Math.min(i, 10) * 0.05}s both`,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <span style={{
                     fontFamily: 'JetBrains Mono, monospace',
                     fontSize: '10px',
