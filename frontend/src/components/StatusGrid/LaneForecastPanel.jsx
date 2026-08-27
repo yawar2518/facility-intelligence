@@ -1,5 +1,20 @@
 import ForecastChart from '../ForecastChart'
 
+// On mobile the panel goes full-width instead of the fixed 460px drawer.
+const PANEL_STYLES = `
+  .lfp-panel {
+    width: 460px;
+  }
+  @media (max-width: 768px) {
+    .lfp-panel {
+      width: 100% !important;
+      max-width: 100vw !important;
+      top: 52px !important;
+      height: calc(100% - 52px) !important;
+    }
+  }
+`
+
 // Same slide-in drawer shell as DeviceDetailPanel — kept as a separate
 // component (rather than reusing DeviceDetailPanel with an optional
 // "lane mode") because what it's showing is conceptually different: a
@@ -9,6 +24,8 @@ function LaneForecastPanel({ lane, onClose }) {
 
   return (
     <>
+      <style>{PANEL_STYLES}</style>
+
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -21,12 +38,11 @@ function LaneForecastPanel({ lane, onClose }) {
       />
 
       {/* Panel */}
-      <div style={{
+      <div className="lfp-panel" style={{
         position: 'absolute',
         top: 0,
         right: 0,
         height: '100%',
-        width: '460px',
         background: '#f7f2e9',
         borderLeft: '1px solid rgba(33, 29, 23, 0.14)',
         boxShadow: '-16px 0 40px rgba(33, 29, 23, 0.12)',
@@ -67,6 +83,7 @@ function LaneForecastPanel({ lane, onClose }) {
               fontSize: '16px',
               color: 'var(--text-3)',
               cursor: 'pointer',
+              padding: '4px 8px',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-1)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-3)' }}

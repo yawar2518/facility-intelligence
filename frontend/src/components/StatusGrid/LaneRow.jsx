@@ -5,9 +5,9 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
 
   const laneTypeBadge = {
     ENTRY:      { bg: 'rgba(31, 158, 122, 0.1)', color: 'var(--online)' },
-    EXIT:       { bg: 'rgba(191, 90, 47, 0.1)', color: 'var(--accent)' },
-    PAY:        { bg: 'rgba(33, 29, 23, 0.07)', color: 'var(--text-2)' },
-    ENTRY_EXIT: { bg: 'rgba(33, 29, 23, 0.07)', color: 'var(--text-2)' },
+    EXIT:       { bg: 'rgba(191, 90, 47, 0.1)',  color: 'var(--accent)' },
+    PAY:        { bg: 'rgba(33, 29, 23, 0.07)',  color: 'var(--text-2)' },
+    ENTRY_EXIT: { bg: 'rgba(33, 29, 23, 0.07)',  color: 'var(--text-2)' },
   }
 
   const badge = laneTypeBadge[lane.lane_type] || { bg: 'rgba(33, 29, 23, 0.07)', color: 'var(--text-2)' }
@@ -21,12 +21,14 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
         alignItems: 'center',
         gap: '8px',
         marginBottom: '9px',
+        flexWrap: 'wrap',
       }}>
         <span style={{
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: '10px',
           color: 'var(--text-3)',
           width: '40px',
+          flex: 'none',
         }}>
           {lane.code || lane.name.split(' ')[0]}
         </span>
@@ -34,6 +36,11 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
         <span style={{
           fontSize: '12.5px',
           fontWeight: 500,
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}>
           {lane.name}
         </span>
@@ -46,6 +53,7 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
           background: badge.bg,
           padding: '2px 6px',
           borderRadius: '4px',
+          flex: 'none',
         }}>
           {lane.lane_type}
         </span>
@@ -62,7 +70,7 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              marginLeft: 'auto',
+              flex: 'none',
               background: 'none',
               border: '1px solid var(--border-2)',
               borderRadius: '5px',
@@ -90,7 +98,8 @@ function LaneRow({ lane, areaName, onDeviceClick, onForecastClick, isLast }) {
         )}
       </div>
 
-      {/* Device grid */}
+      {/* Device grid — flex-wrap with fluid tiles so they fill rows
+          in pairs on mobile and in threes/fours on desktop naturally. */}
       <div style={{
         display: 'flex',
         flexWrap: 'wrap',
